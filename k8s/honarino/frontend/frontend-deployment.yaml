@@ -15,6 +15,6 @@ spec:
         spec:
             containers:
                 - name: frontend
-                  image: ghcr.io/realhesam/honarino/frontend:5dfd302
+                  image: ghcr.io/realhesam/honarino/frontend:3287db4
                   ports:
                       - containerPort: 3000
