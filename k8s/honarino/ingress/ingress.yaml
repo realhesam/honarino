@@ -42,4 +42,4 @@ spec:
                         service:
                             name: minio
                             port:
-                                number: 9001
+                                number: 9000
