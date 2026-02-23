@@ -10,10 +10,12 @@ resources:
     - secrets/postgres-secret.yaml
     - secrets/minio-secret.yaml
     - secrets/api-secret.yaml
+    - secrets/pgbackweb-secret.yaml
 
     # postgres
     - postgres/postgres-service.yaml
     - postgres/postgres-statefulset.yaml
+    - postgres/postgres-pgbackweb.yaml
 
     # api
     - api/api-service.yaml
