@@ -16,7 +16,7 @@ spec:
         spec:
             containers:
                 - name: pgbackweb
-                  image: ghcr.io/eduardolat/pgbackweb:latest
+                  image: eduardolat/pgbackweb:latest
                   ports:
                       - containerPort: 8085
                   volumeMounts:
