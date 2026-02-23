@@ -12,7 +12,7 @@ spec:
     persistentVolumeReclaimPolicy: Retain
     storageClassName: local-backup
     local:
-        path: /var/backups
+        path: /var/honarino/backups
     nodeAffinity:
         required:
             nodeSelectorTerms:
