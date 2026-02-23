@@ -3,8 +3,6 @@ kind: Ingress
 metadata:
     name: honarino-ingress
     namespace: honarino
-    annotations:
-        nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
     rules:
         - host:
@@ -31,8 +29,8 @@ spec:
                             name: minio
                             port:
                                 number: 9000
-                  - path: /pgbackweb(/|$)(.*)
-                    pathType: ImplementationSpecific
+                  - path: /pgbackweb
+                    pathType: Prefix
                     backend:
                         service:
                             name: pgbackweb-service
