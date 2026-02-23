@@ -15,7 +15,9 @@ services:
             retries: 5
 
     api:
-        image: ghcr.io/realhesam/honarino/backend:latest
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
         container_name: server
         env_file:
             - config/.api.env
@@ -110,3 +112,4 @@ volumes:
     nextjs_node_modules:
     postgres_data:
     minio_data:
+
