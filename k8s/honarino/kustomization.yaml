@@ -31,3 +31,7 @@ resources:
 
     # ingress
     - ingress/ingress.yaml
+
+    # backup
+
+    - backup/backups-pv-pvc.yaml
