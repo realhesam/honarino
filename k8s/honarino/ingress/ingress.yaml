@@ -33,6 +33,6 @@ spec:
                     pathType: Prefix
                     backend:
                         service:
-                            name: pgbackweb
+                            name: pgbackweb-service
                             port:
                                 number: 8085
