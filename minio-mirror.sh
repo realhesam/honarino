@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MINIO_ALIAS="local/minio"
+MINIO_ALIAS="localminio"
 MINIO_URL="http://127.0.0.1:9000"
 MINIO_ACCESS_KEY="minioadmin"
 MINIO_SECRET_KEY="VeryStrongPassword123"
