@@ -29,3 +29,10 @@ spec:
                             name: minio
                             port:
                                 number: 9000
+                  - path: /pgbackweb/
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: pgbackweb-service
+                            port:
+                            number: 80

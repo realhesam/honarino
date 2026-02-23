@@ -1,0 +1,46 @@
+# pgbackweb.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: pgbackweb
+    namespace: honarino
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: pgbackweb
+    template:
+        metadata:
+            labels:
+                app: pgbackweb
+        spec:
+            containers:
+                - name: pgbackweb
+                  image: ghcr.io/eduardolat/pgbackweb:latest
+                  ports:
+                      - containerPort: 8085
+                  volumeMounts:
+                      - mountPath: /var/honarino/backups
+                        name: backups-vol
+                  envFrom:
+                      - secretRef:
+                            name: pgbackweb-secret
+            volumes:
+                - name: backups-vol
+                  persistentVolumeClaim:
+                      claimName: backups-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: pgbackweb-service
+    namespace: default
+spec:
+    selector:
+        app: pgbackweb
+    ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 8085
+    type: ClusterIP
