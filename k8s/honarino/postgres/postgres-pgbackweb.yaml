@@ -34,7 +34,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-    name: pgbackweb-service
+    name: pgbackweb
     namespace: default
 spec:
     selector:
