@@ -35,4 +35,4 @@ spec:
                         service:
                             name: pgbackweb-service
                             port:
-                            number: 80
+                                number: 80
