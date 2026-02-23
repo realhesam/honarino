@@ -40,7 +40,6 @@ spec:
     selector:
         app: pgbackweb
     ports:
-        - protocol: TCP
-          port: 8085
+        - port: 8085
           targetPort: 8085
     type: ClusterIP
