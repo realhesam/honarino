@@ -15,6 +15,7 @@ jobs:
 
       - name: Download file
         run: |
+          ping 62.3.14.27
           mkdir -p data
           curl -L "https://drive.usercontent.google.com/u/0/uc?id=1aEBl0by1WtOObKUQjS_GkGzSGCHtqCiF&export=download" -o data/file.bin
 
