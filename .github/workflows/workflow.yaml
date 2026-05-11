@@ -21,23 +21,36 @@ jobs:
           git lfs install
           git lfs track "*.rar"
           git lfs track "*.zip"
+          git lfs track "*.7z"
 
       - name: Download files
         run: |
-          mkdir -p data
+          mkdir -p mods
 
-          curl -L "https://files.gta5-mods.com/uploads/fib-fbi-tower-sign-reworked-v1-0/f1ac72-FIB-FBI%20&%20CIA%20Reworked%20V2.5.rar" -o data/FIB-FBI-CIA-Reworked-V2.5.rar
-          curl -L "https://files.gta5-mods.com/uploads/mapeditor-2-ymap-converter/440c88-ME2YM.zip" -o data/ME2YM.zip
-          curl -L "https://files.gta5-mods.com/uploads/jantsuu-tower-add-on-sp/30965e-JANTSUU_Tower_1.0.1.zip" -o data/JANTSUU_Tower_1.0.1.zip
-          curl -L "https://files.gta5-mods.com/uploads/stark-mansion/d5d1bc-Star%20Mansion%20v2.rar" -o data/Star_Mansion_v2.rar
-          curl -L "https://files.gta5-mods.com/uploads/mlo-pump-run-gym-add-on-sp-fivem-ragemp/6b5674-LOKAS_GYM.rar" -o data/LOKAS_GYM.rar
-          curl -L "https://files.gta5-mods.com/uploads/eclipse-complex/719018-complex15.zip" -o data/complex15.zip
-          curl -L "https://files.gta5-mods.com/uploads/gta-iv-suffolk-church-sp-fivem/e2bc7a-MLOsuffolkchurch.rar" -o data/MLO_suffolkchurch.rar
+          curl -L "https://files.gta5-mods.com/uploads/gta-v-weedshop-weedcoffee-fivem-ready-sp/66fc8b-moreo_weedshop.rar" -o "mods/moreo_weedshop.rar"
+
+          curl -L "https://files.gta5-mods.com/uploads/mlo-gta-v-fish-chip-restaurant-sp-fivem-ready/78e875-Moreo_Fish&Chip.rar" -o "mods/Moreo_Fish_Chip.rar"
+
+          curl -L "https://files.gta5-mods.com/uploads/star-labs-museum/78d0f4-star-labs-museum.zip" -o "mods/star-labs-museum.zip"
+
+          curl -L "https://files.gta5-mods.com/uploads/wedding-map-gta-fivem-friendly-xml-ymap/8bfda3-Wedding.7z" -o "mods/Wedding.7z"
+
+          curl -L "https://files.gta5-mods.com/uploads/mlo-wiwang-tower-lobby-rooftop-bar-add-on-sp-fivem/b522fe-[uNiqx]%20WIWANG%20TOWER.rar" -o "mods/WIWANG_TOWER.rar"
+
+          curl -L "https://files.gta5-mods.com/uploads/church-interior/6d8f97-Church%20Interior.rar" -o "mods/Church_Interior.rar"
+
+          curl -L "https://files.gta5-mods.com/uploads/ifruit-offices-mlo-sp-five-m-rage-mp/bbb147-ifruit%20offices.zip" -o "mods/ifruit_offices.zip"
+
+          curl -L "https://files.gta5-mods.com/uploads/justfury-s-showroom-add-on-sp-fivem/48c7d9-FURY%20SHOWROOM%202022.zip" -o "mods/FURY_SHOWROOM_2022.zip"
+
+          curl -L "https://files.gta5-mods.com/uploads/vinewood-police-station-interior-ymap/0ef8cc-policevw.rar" -o "mods/policevw.rar"
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
           git add .
-          git commit -m "Add downloaded GTA5-mods files" || echo "No changes"
+          git commit -m "Add GTA5 mods files" || echo "No changes"
+
           git push
