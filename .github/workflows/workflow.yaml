@@ -22,28 +22,29 @@ jobs:
           git lfs track "*.rar"
           git lfs track "*.zip"
           git lfs track "*.7z"
+          git add .gitattributes
 
       - name: Download files
         run: |
           mkdir -p mods
 
-          curl -L "https://files.gta5-mods.com/uploads/gta-v-weedshop-weedcoffee-fivem-ready-sp/66fc8b-moreo_weedshop.rar" -o "mods/moreo_weedshop.rar"
+          curl --globoff -L "https://files.gta5-mods.com/uploads/gta-v-weedshop-weedcoffee-fivem-ready-sp/66fc8b-moreo_weedshop.rar" -o "mods/moreo_weedshop.rar"
 
-          curl -L "https://files.gta5-mods.com/uploads/mlo-gta-v-fish-chip-restaurant-sp-fivem-ready/78e875-Moreo_Fish&Chip.rar" -o "mods/Moreo_Fish_Chip.rar"
+          curl --globoff -L "https://files.gta5-mods.com/uploads/mlo-gta-v-fish-chip-restaurant-sp-fivem-ready/78e875-Moreo_Fish&Chip.rar" -o "mods/Moreo_Fish_Chip.rar"
 
-          curl -L "https://files.gta5-mods.com/uploads/star-labs-museum/78d0f4-star-labs-museum.zip" -o "mods/star-labs-museum.zip"
+          curl --globoff -L "https://files.gta5-mods.com/uploads/star-labs-museum/78d0f4-star-labs-museum.zip" -o "mods/star-labs-museum.zip"
 
-          curl -L "https://files.gta5-mods.com/uploads/wedding-map-gta-fivem-friendly-xml-ymap/8bfda3-Wedding.7z" -o "mods/Wedding.7z"
+          curl --globoff -L "https://files.gta5-mods.com/uploads/wedding-map-gta-fivem-friendly-xml-ymap/8bfda3-Wedding.7z" -o "mods/Wedding.7z"
 
-          curl -L "https://files.gta5-mods.com/uploads/mlo-wiwang-tower-lobby-rooftop-bar-add-on-sp-fivem/b522fe-[uNiqx]%20WIWANG%20TOWER.rar" -o "mods/WIWANG_TOWER.rar"
+          curl --globoff -L "https://files.gta5-mods.com/uploads/mlo-wiwang-tower-lobby-rooftop-bar-add-on-sp-fivem/b522fe-[uNiqx]%20WIWANG%20TOWER.rar" -o "mods/WIWANG_TOWER.rar"
 
-          curl -L "https://files.gta5-mods.com/uploads/church-interior/6d8f97-Church%20Interior.rar" -o "mods/Church_Interior.rar"
+          curl --globoff -L "https://files.gta5-mods.com/uploads/church-interior/6d8f97-Church%20Interior.rar" -o "mods/Church_Interior.rar"
 
-          curl -L "https://files.gta5-mods.com/uploads/ifruit-offices-mlo-sp-five-m-rage-mp/bbb147-ifruit%20offices.zip" -o "mods/ifruit_offices.zip"
+          curl --globoff -L "https://files.gta5-mods.com/uploads/ifruit-offices-mlo-sp-five-m-rage-mp/bbb147-ifruit%20offices.zip" -o "mods/ifruit_offices.zip"
 
-          curl -L "https://files.gta5-mods.com/uploads/justfury-s-showroom-add-on-sp-fivem/48c7d9-FURY%20SHOWROOM%202022.zip" -o "mods/FURY_SHOWROOM_2022.zip"
+          curl --globoff -L "https://files.gta5-mods.com/uploads/justfury-s-showroom-add-on-sp-fivem/48c7d9-FURY%20SHOWROOM%202022.zip" -o "mods/FURY_SHOWROOM_2022.zip"
 
-          curl -L "https://files.gta5-mods.com/uploads/vinewood-police-station-interior-ymap/0ef8cc-policevw.rar" -o "mods/policevw.rar"
+          curl --globoff -L "https://files.gta5-mods.com/uploads/vinewood-police-station-interior-ymap/0ef8cc-policevw.rar" -o "mods/policevw.rar"
 
       - name: Commit and push
         run: |
@@ -51,6 +52,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add .
-          git commit -m "Add GTA5 mods files" || echo "No changes"
+          git commit -m "Add GTA5 mods files" || echo "No changes to commit"
 
           git push
