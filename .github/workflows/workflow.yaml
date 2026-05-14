@@ -28,7 +28,7 @@ jobs:
         run: |
           mkdir -p mods
 
-          curl --globoff -L "https://files.gta5-mods.com/uploads/codewalker-gtav-interactive-3d-map/1cfcd8-CodeWalker30_dev46.zip" -o "mods/codewalker.zip"
+          curl --globoff -L "https://files.gta5-mods.com/uploads/all-police-station-open/f5186e-AllPoliceStationOpen.zip" -o "mods/policestation.zip"
 
       - name: Commit and push
         run: |
