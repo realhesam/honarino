@@ -28,7 +28,7 @@ jobs:
         run: |
           mkdir -p mods
 
-          curl --globoff -L "https://files.gta5-mods.com/uploads/all-police-station-open/f5186e-AllPoliceStationOpen.zip" -o "mods/policestation.zip"
+          curl --globoff -L "https://files.gta5-mods.com/uploads/mlo-burgershot-2023-add-on-sp-fivem/aca46f-[uNiqx]%20BURGERSHOT.rar" -o "mods/burger.zip"
 
       - name: Commit and push
         run: |
