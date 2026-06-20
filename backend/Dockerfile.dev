@@ -1,0 +1,21 @@
+FROM golang:bookworm
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+
+# For Proxy (V2ray for iran internet :D)
+# ENV GOPROXY=direct
+# ENV ALL_PROXY=socks5://10.56.247.132:10808
+# ENV HTTP_PROXY=http://10.56.247.132:10808
+# ENV HTTPS_PROXY=http://10.56.247.132:10808
+
+RUN go mod download
+
+RUN go install github.com/air-verse/air@latest
+
+COPY . .
+
+EXPOSE 3001
+
+CMD ["air", "-c", ".air.toml"]

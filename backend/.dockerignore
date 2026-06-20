@@ -1,0 +1,24 @@
+# Build output
+tmp/
+bin/
+
+# Go cache
+*.test
+*.out
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile*
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# DB migrations
+db/migrations/
