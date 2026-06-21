@@ -79,7 +79,6 @@ func registerRoutes(app *fiber.App, cfg *config.Config, db *pgxpool.Pool, rdb *c
 	user := api.Group("/user", protected)
 	user.Get("/profile", profileHdl.Profile)
 	user.Put("/profile", profileHdl.UpdateProfile)
-	user.Post("/profile/upload", profileHdl.UploadProfile)
 	user.Post("/profile/upload-url", profileHdl.GetUploadURL)
 	user.Post("/profile/change-password", profileHdl.ChangePassword)
 
