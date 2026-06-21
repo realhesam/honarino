@@ -68,5 +68,5 @@ func main() {
 		slog.Error("shutdown error", "err", err)
 	}
 
-	slog.Info("server stopped")
+	slog.Info("server stopped.")
 }
