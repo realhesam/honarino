@@ -5,6 +5,8 @@ import Logo from "@/ui/Logo";
 import { useEffect, useState } from "react";
 import { PiMagnifyingGlassDuotone } from "react-icons/pi";
 import LinkButton from "@/ui/LinkButton";
+import Modal from "@/ui/Modal";
+import SearchForm from "@/components/search/SearchForm";
 
 function Header() {
   const [showPanel, setShowPanel] = useState(false);
@@ -50,11 +52,22 @@ function Header() {
 
               <span className="hidden w-0.5 h-7 bg-stone-300 md:block"></span>
 
-              <button className="p-1 md:p-2 border-2 border-stone-300 rounded-xl cursor-pointer hover:bg-stone-50 transition">
-                <span className="*:size-8 text-stone-300">
-                  <PiMagnifyingGlassDuotone />
-                </span>
-              </button>
+              <Modal>
+                <Modal.Open name="search-modal">
+                  <button className="p-1 md:p-2 border-2 border-stone-300 rounded-xl cursor-pointer hover:bg-stone-50 transition">
+                    <span className="*:size-8 text-stone-300">
+                      <PiMagnifyingGlassDuotone />
+                    </span>
+                  </button>
+                </Modal.Open>
+                <Modal.Window
+                  name="search-modal"
+                  label="جست و جو"
+                  icon={<PiMagnifyingGlassDuotone />}
+                >
+                  <SearchForm />
+                </Modal.Window>
+              </Modal>
             </div>
           </div>
         </div>

@@ -58,7 +58,7 @@ function Navigation() {
       <div>
         <button
           onClick={() => setIsOpen(true)}
-          className="sm:hidden *:size-8 p-1 border-2 rounded-full border-stone-300 text-stone-300 cursor-pointer"
+          className="sm:hidden *:size-8 p-1 border-2 rounded-xl border-stone-300 text-stone-300 cursor-pointer"
         >
           <HiBars3 />
         </button>
@@ -126,7 +126,7 @@ function Navigation() {
             </nav>
             {isOpen && <Overlay />}
           </>,
-          document.body
+          document.body,
         )}
       </div>
 
