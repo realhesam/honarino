@@ -1,5 +1,3 @@
-# honarino
-
 ![Honarino-Banner](./github/Honarino-banner.jpg)
 
 # honarino
