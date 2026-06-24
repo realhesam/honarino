@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"golang.org/x/crypto/bcrypt"
 
 	dbsqlc "backend/db/sqlc"
@@ -16,11 +16,12 @@ import (
 )
 
 var (
-	ErrEmailTaken    = errors.New("email already registered")
-	ErrUsernameTaken = errors.New("username already registered")
-	ErrInvalidCreds  = errors.New("invalid credentials")
-	ErrUserNotFound  = errors.New("user not found")
-	ErrTokenRevoked  = errors.New("token has been revoked")
+	ErrEmailTaken    = errors.New("ایمیل قبلا ثبت شده است")
+	ErrUsernameTaken = errors.New("نام کاربری قبلا ثبت شده است")
+	ErrPhoneTaken    = errors.New("شماره تلفن قبلا ثبت شده است")
+	ErrInvalidCreds  = errors.New("نام کاربری یا رمز عبور اشتباه است")
+	ErrUserNotFound  = errors.New("کاربر یافت نشد")
+	ErrTokenRevoked  = errors.New("توکن لغو شده است")
 )
 
 type AuthService struct {
@@ -39,21 +40,28 @@ func NewAuthService(queries *dbsqlc.Queries, rdb *cache.Redis, secret string, ex
 	}
 }
 
+func parseDBError(err error) error {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return err
+	}
+
+	switch pgErr.Code {
+	case "23505":
+		switch pgErr.ConstraintName {
+		case "idx_users_email_active", "users_email_key":
+			return ErrEmailTaken
+		case "idx_users_username_active", "users_username_key":
+			return ErrUsernameTaken
+		case "idx_users_phone_active", "users_phone_key":
+			return ErrPhoneTaken
+		}
+	}
+
+	return err
+}
+
 func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) (*model.AuthResponse, error) {
-	_, err := s.queries.GetUserByEmail(ctx, req.Email)
-	if err == nil {
-		return nil, ErrEmailTaken
-	} else if !errors.Is(err, pgx.ErrNoRows) {
-		return nil, fmt.Errorf("check email: %w", err)
-	}
-
-	_, err = s.queries.GetUserByUsername(ctx, req.Username)
-	if err == nil {
-		return nil, ErrUsernameTaken
-	} else if !errors.Is(err, pgx.ErrNoRows) {
-		return nil, fmt.Errorf("check username: %w", err)
-	}
-
 	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("hash password: %w", err)
@@ -66,7 +74,7 @@ func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) 
 		Password: string(hashed),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("create user: %w", err)
+		return nil, parseDBError(err)
 	}
 
 	user := toModel(row)
