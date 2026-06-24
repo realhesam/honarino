@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -77,7 +76,7 @@ func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) 
 		return nil, fmt.Errorf("generate token: %w", err)
 	}
 
-	s.cacheUser(ctx, user)
+	CacheUser(ctx, s.rdb, user)
 
 	return &model.AuthResponse{Token: token, User: *user}, nil
 }
@@ -99,7 +98,7 @@ func (s *AuthService) Login(ctx context.Context, req *model.LoginRequest) (*mode
 		return nil, fmt.Errorf("generate token: %w", err)
 	}
 
-	s.cacheUser(ctx, user)
+	CacheUser(ctx, s.rdb, user)
 
 	return &model.AuthResponse{Token: token, User: *user}, nil
 }
@@ -122,27 +121,6 @@ func (s *AuthService) Logout(ctx context.Context, tokenStr string) error {
 	}
 
 	return s.rdb.Set(ctx, cache.KeyTokenBlacklist(tokenID), "1", ttl)
-}
-
-func (s *AuthService) IsTokenRevoked(ctx context.Context, tokenID string) bool {
-	exists, err := s.rdb.Exists(ctx, cache.KeyTokenBlacklist(tokenID))
-	if err != nil {
-		slog.Warn("redis check revoked error", "err", err)
-		return false
-	}
-	return exists
-}
-
-func (s *AuthService) InvalidateUserCache(ctx context.Context, userID string) {
-	if err := s.rdb.Del(ctx, cache.KeyUserProfile(userID)); err != nil {
-		slog.Warn("redis del profile error", "err", err, "userID", userID)
-	}
-}
-
-func (s *AuthService) cacheUser(ctx context.Context, user *model.UserResponse) {
-	if err := s.rdb.Set(ctx, cache.KeyUserProfile(user.ID), user, cache.TTLUserProfile*time.Second); err != nil {
-		slog.Warn("redis set profile error", "err", err)
-	}
 }
 
 func (s *AuthService) generateToken(userID string) (tokenStr, tokenID string, err error) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -45,7 +44,7 @@ func (s *ProfileService) GetProfile(ctx context.Context, userID string) (*model.
 	}
 
 	u := toModel(row)
-	s.cacheUser(ctx, u)
+	CacheUser(ctx, s.rdb, u)
 	return u, nil
 }
 
@@ -67,7 +66,7 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, userID string, req *
 	}
 
 	u := toModel(row)
-	s.InvalidateUserCache(ctx, userID)
+	InvalidateUserCache(ctx, s.rdb, userID)
 	return u, nil
 }
 
@@ -102,16 +101,4 @@ func (s *ProfileService) ChangePassword(ctx context.Context, userID, currentPass
 		ID:       uid,
 		Password: string(hashed),
 	})
-}
-
-func (s *ProfileService) InvalidateUserCache(ctx context.Context, userID string) {
-	if err := s.rdb.Del(ctx, cache.KeyUserProfile(userID)); err != nil {
-		slog.Warn("redis del profile error", "err", err, "userID", userID)
-	}
-}
-
-func (s *ProfileService) cacheUser(ctx context.Context, user *model.UserResponse) {
-	if err := s.rdb.Set(ctx, cache.KeyUserProfile(user.ID), user, cache.TTLUserProfile*time.Second); err != nil {
-		slog.Warn("redis set profile error", "err", err)
-	}
 }
