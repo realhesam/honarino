@@ -1,15 +1,15 @@
-.PHONY: help dev up-prod build build-backend build-frontend logs down restart
+.PHONY: help dev hybrid-dev up build build-backend build-frontend logs down restart
 
 help:
-	@echo "Available targets: dev up-prod build build-backend build-frontend logs down restart"
+	@echo "Available targets: dev hybrid-dev up build build-backend build-frontend logs down restart"
 
 dev:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 hybrid-dev:
-	docker compose -f docker-compose.yml -f docker-compose.hybrid.yml up
+	docker compose -f docker-compose.yml -f docker-compose.hybrid.yml up --build
 
-up-prod:
+up:
 	docker compose up --build -d
 
 build:
