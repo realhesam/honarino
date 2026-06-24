@@ -25,6 +25,8 @@ logs:
 	docker compose logs -f
 
 down:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+	docker compose -f docker-compose.yml -f docker-compose.hybrid.yml down
 	docker compose down
 
 restart:
