@@ -8,12 +8,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
 	"backend/config"
+	dbsqlc "backend/db/sqlc"
 	server "backend/internal/app"
 	"backend/internal/cache"
-	"backend/internal/repository"
 )
 
 func main() {
@@ -24,7 +25,7 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	db, err := repository.NewPostgres(cfg.DBUrl)
+	db, err := pgxpool.New(context.Background(), cfg.DBUrl)
 	if err != nil {
 		slog.Error("failed to connect to database", "err", err)
 		os.Exit(1)
@@ -46,7 +47,9 @@ func main() {
 		slog.Info("redis flushed")
 	}
 
-	app := server.NewServer(cfg, db, rdb)
+	queries := dbsqlc.New(db)
+
+	app := server.NewServer(cfg, db, rdb, queries)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

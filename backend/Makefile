@@ -49,3 +49,6 @@ lint:
 
 tidy:
 	go mod tidy
+
+sqlc:
+	sqlc generate

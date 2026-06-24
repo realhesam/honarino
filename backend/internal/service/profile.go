@@ -1,103 +1,117 @@
 package service
 
 import (
-    "context"
-    "fmt"
-    "log/slog"
-    "time"
+	"context"
+	"fmt"
+	"log/slog"
+	"time"
 
-    "golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/bcrypt"
 
-    "backend/internal/cache"
-    "backend/internal/model"
-    "backend/internal/repository"
+	dbsqlc "backend/db/sqlc"
+	"backend/internal/cache"
+	"backend/internal/model"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ProfileService struct {
-    userRepo *repository.UserRepository
-    rdb      *cache.Redis
+	queries *dbsqlc.Queries
+	rdb     *cache.Redis
 }
 
-func NewProfileService(repo *repository.UserRepository, rdb *cache.Redis) *ProfileService {
-    return &ProfileService{userRepo: repo, rdb: rdb}
+func NewProfileService(queries *dbsqlc.Queries, rdb *cache.Redis) *ProfileService {
+	return &ProfileService{queries: queries, rdb: rdb}
 }
 
-func (s *ProfileService) GetProfile(ctx context.Context, userID string) (*model.User, error) {
-    key := cache.KeyUserProfile(userID)
+func (s *ProfileService) GetProfile(ctx context.Context, userID string) (*model.UserResponse, error) {
+	key := cache.KeyUserProfile(userID)
 
-    var user model.User
-    err := s.rdb.Get(ctx, key, &user)
-    if err == nil {
-        return &user, nil
-    }
+	var user model.UserResponse
+	if err := s.rdb.Get(ctx, key, &user); err == nil {
+		return &user, nil
+	} else if !cache.IsNil(err) {
+		slog.Warn("redis get profile error", "err", err)
+	}
 
-    if !cache.IsNil(err) {
-        slog.Warn("redis get profile error", "err", err)
-    }
+	uid, err := parseUUID(userID)
+	if err != nil {
+		return nil, ErrUserNotFound
+	}
 
-    dbUser, err := s.userRepo.GetByID(ctx, userID)
-    if err != nil {
-        return nil, ErrUserNotFound
-    }
+	row, err := s.queries.GetUserByID(ctx, uid)
+	if err != nil {
+		return nil, ErrUserNotFound
+	}
 
-    s.cacheUser(ctx, dbUser)
-    return dbUser, nil
+	u := toModel(row)
+	s.cacheUser(ctx, u)
+	return u, nil
 }
 
-func (s *ProfileService) UpdateProfile(ctx context.Context, userID string, updates map[string]interface{}) (*model.User, error) {
-    if len(updates) == 0 {
-        return nil, fmt.Errorf("no updates provided")
-    }
+func (s *ProfileService) UpdateProfile(ctx context.Context, userID string, req *model.UpdateProfileRequest) (*model.UserResponse, error) {
+	uid, err := parseUUID(userID)
+	if err != nil {
+		return nil, ErrUserNotFound
+	}
 
-    user, err := s.userRepo.Update(ctx, userID, updates)
-    if err != nil {
-        return nil, err
-    }
+	row, err := s.queries.UpdateUser(ctx, dbsqlc.UpdateUserParams{
+		ID:                uid,
+		Name:              pgtype.Text{String: req.Name, Valid: req.Name != ""},
+		Phone:             pgtype.Text{String: req.Phone, Valid: req.Phone != ""},
+		Address:           pgtype.Text{String: req.Address, Valid: req.Address != ""},
+		ProfilePictureUrl: pgtype.Text{String: req.ProfilePictureURL, Valid: req.ProfilePictureURL != ""},
+	})
+	if err != nil {
+		return nil, err
+	}
 
-    s.InvalidateUserCache(ctx, userID)
-    return user, nil
+	u := toModel(row)
+	s.InvalidateUserCache(ctx, userID)
+	return u, nil
 }
 
 func (s *ProfileService) ChangePassword(ctx context.Context, userID, currentPassword, newPassword string) error {
-    if currentPassword == "" || newPassword == "" {
-        return fmt.Errorf("current and new passwords are required")
-    }
-    if len(newPassword) < 8 {
-        return fmt.Errorf("new password must be at least 8 characters")
-    }
+	if currentPassword == "" || newPassword == "" {
+		return fmt.Errorf("current and new passwords are required")
+	}
+	if len(newPassword) < 8 {
+		return fmt.Errorf("new password must be at least 8 characters")
+	}
 
-    storedPassword, err := s.userRepo.GetPasswordByID(ctx, userID)
-    if err != nil {
-        return err
-    }
+	uid, err := parseUUID(userID)
+	if err != nil {
+		return ErrUserNotFound
+	}
 
-    if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(currentPassword)); err != nil {
-        return ErrInvalidCreds
-    }
+	storedPassword, err := s.queries.GetPasswordByID(ctx, uid)
+	if err != nil {
+		return ErrUserNotFound
+	}
 
-    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
-    if err != nil {
-        return fmt.Errorf("hash password: %w", err)
-    }
+	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(currentPassword)); err != nil {
+		return ErrInvalidCreds
+	}
 
-    if err := s.userRepo.UpdatePassword(ctx, userID, string(hashedPassword)); err != nil {
-        return err
-    }
+	hashed, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("hash password: %w", err)
+	}
 
-    s.InvalidateUserCache(ctx, userID)
-    return nil
+	return s.queries.UpdatePassword(ctx, dbsqlc.UpdatePasswordParams{
+		ID:       uid,
+		Password: string(hashed),
+	})
 }
 
 func (s *ProfileService) InvalidateUserCache(ctx context.Context, userID string) {
-    key := cache.KeyUserProfile(userID)
-    if err := s.rdb.Del(ctx, key); err != nil {
-        slog.Warn("redis del profile error", "err", err, "userID", userID)
-    }
+	if err := s.rdb.Del(ctx, cache.KeyUserProfile(userID)); err != nil {
+		slog.Warn("redis del profile error", "err", err, "userID", userID)
+	}
 }
 
-func (s *ProfileService) cacheUser(ctx context.Context, user *model.User) {
-    key := cache.KeyUserProfile(user.ID)
-    if err := s.rdb.Set(ctx, key, user, cache.TTLUserProfile*time.Second); err != nil {
-        slog.Warn("redis set profile error", "err", err)
-    }
+func (s *ProfileService) cacheUser(ctx context.Context, user *model.UserResponse) {
+	if err := s.rdb.Set(ctx, cache.KeyUserProfile(user.ID), user, cache.TTLUserProfile*time.Second); err != nil {
+		slog.Warn("redis set profile error", "err", err)
+	}
 }

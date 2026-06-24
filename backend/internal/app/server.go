@@ -10,20 +10,19 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"backend/config"
+	dbsqlc "backend/db/sqlc"
 	"backend/internal/cache"
 	"backend/internal/handler"
 	"backend/internal/middleware"
-	"backend/internal/repository"
 	"backend/internal/service"
 	"backend/internal/storage"
 
 	"log/slog"
 )
 
-func NewServer(cfg *config.Config, db *pgxpool.Pool, rdb *cache.Redis) *fiber.App {
-	userRepo := repository.NewUserRepository(db)
-	authSvc := service.NewAuthService(userRepo, rdb, cfg.JWTSecret, cfg.JWTExpireH)
-	profileSvc := service.NewProfileService(userRepo, rdb)
+func NewServer(cfg *config.Config, db *pgxpool.Pool, rdb *cache.Redis, queries *dbsqlc.Queries) *fiber.App {
+	authSvc := service.NewAuthService(queries, rdb, cfg.JWTSecret, cfg.JWTExpireH)
+	profileSvc := service.NewProfileService(queries, rdb)
 
 	var minioClient *storage.MinioClient
 	if cfg.MinioEndpoint != "" {

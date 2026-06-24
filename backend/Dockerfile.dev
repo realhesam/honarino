@@ -5,10 +5,8 @@ WORKDIR /app
 COPY go.mod go.sum ./
 
 # For Proxy (V2ray for iran internet :D)
-# ENV GOPROXY=direct
-# ENV ALL_PROXY=socks5://10.56.247.132:10808
-# ENV HTTP_PROXY=http://10.56.247.132:10808
-# ENV HTTPS_PROXY=http://10.56.247.132:10808
+RUN go env -w GOPROXY=https://package-mirror.liara.ir/repository/go/
+RUN go env -w GOSUMDB=off
 
 RUN go mod download
 

@@ -8,30 +8,32 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
+
+	dbsqlc "backend/db/sqlc"
 	"backend/internal/cache"
 	"backend/internal/model"
-	"backend/internal/repository"
 )
 
 var (
-	ErrEmailTaken   = errors.New("email already registered")
+	ErrEmailTaken    = errors.New("email already registered")
 	ErrUsernameTaken = errors.New("username already registered")
-	ErrInvalidCreds = errors.New("invalid credentials")
-	ErrUserNotFound = errors.New("user not found")
-	ErrTokenRevoked = errors.New("token has been revoked")
+	ErrInvalidCreds  = errors.New("invalid credentials")
+	ErrUserNotFound  = errors.New("user not found")
+	ErrTokenRevoked  = errors.New("token has been revoked")
 )
 
 type AuthService struct {
-	userRepo  *repository.UserRepository
+	queries   *dbsqlc.Queries
 	rdb       *cache.Redis
 	jwtSecret string
 	jwtExpire int
 }
 
-func NewAuthService(repo *repository.UserRepository, rdb *cache.Redis, secret string, expireH int) *AuthService {
+func NewAuthService(queries *dbsqlc.Queries, rdb *cache.Redis, secret string, expireH int) *AuthService {
 	return &AuthService{
-		userRepo:  repo,
+		queries:   queries,
 		rdb:       rdb,
 		jwtSecret: secret,
 		jwtExpire: expireH,
@@ -39,14 +41,18 @@ func NewAuthService(repo *repository.UserRepository, rdb *cache.Redis, secret st
 }
 
 func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) (*model.AuthResponse, error) {
-	existing, _ := s.userRepo.GetByEmail(ctx, req.Email)
-	if existing != nil {
+	_, err := s.queries.GetUserByEmail(ctx, req.Email)
+	if err == nil {
 		return nil, ErrEmailTaken
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("check email: %w", err)
 	}
 
-	usernameExisting, _ := s.userRepo.GetByUsername(ctx, req.Username)
-	if usernameExisting != nil {
+	_, err = s.queries.GetUserByUsername(ctx, req.Username)
+	if err == nil {
 		return nil, ErrUsernameTaken
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("check username: %w", err)
 	}
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -54,24 +60,30 @@ func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) 
 		return nil, fmt.Errorf("hash password: %w", err)
 	}
 
-	user, err := s.userRepo.Create(ctx, req.Name, req.Username, req.Email, string(hashed))
+	row, err := s.queries.CreateUser(ctx, dbsqlc.CreateUserParams{
+		Name:     req.Name,
+		Username: req.Username,
+		Email:    req.Email,
+		Password: string(hashed),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("create user: %w", err)
 	}
 
-	token, tokenID, err := s.generateToken(user.ID)
+	user := toModel(row)
+
+	token, _, err := s.generateToken(user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("generate token: %w", err)
 	}
 
 	s.cacheUser(ctx, user)
 
-	_ = tokenID
 	return &model.AuthResponse{Token: token, User: *user}, nil
 }
 
 func (s *AuthService) Login(ctx context.Context, req *model.LoginRequest) (*model.AuthResponse, error) {
-	row, err := s.userRepo.GetByUsername(ctx, req.Username)
+	row, err := s.queries.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		return nil, ErrInvalidCreds
 	}
@@ -80,30 +92,16 @@ func (s *AuthService) Login(ctx context.Context, req *model.LoginRequest) (*mode
 		return nil, ErrInvalidCreds
 	}
 
-	token, _, err := s.generateToken(row.ID)
+	user := toModel(row)
+
+	token, _, err := s.generateToken(user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("generate token: %w", err)
 	}
 
-	user := model.User{
-		ID:        row.ID,
-		Name:      row.Name,
-		Email:     row.Email,
-		Username:  row.Username,
-		Phone:     row.Phone,
-		Address:   row.Address,
-		ProfilePictureURL: row.ProfilePictureURL,
-		CreatedAt: row.CreatedAt,
-		DeletedAt: row.DeletedAt,
-	}
+	s.cacheUser(ctx, user)
 
-	s.cacheUser(ctx, &user)
-
-	return &model.AuthResponse{Token: token, User: user}, nil
-}
-
-func (s *AuthService) GetProfile(ctx context.Context, userID string) (*model.User, error) {
-	return nil, fmt.Errorf("use ProfileService.GetProfile")
+	return &model.AuthResponse{Token: token, User: *user}, nil
 }
 
 func (s *AuthService) Logout(ctx context.Context, tokenStr string) error {
@@ -123,13 +121,11 @@ func (s *AuthService) Logout(ctx context.Context, tokenStr string) error {
 		return nil
 	}
 
-	key := cache.KeyTokenBlacklist(tokenID)
-	return s.rdb.Set(ctx, key, "1", ttl)
+	return s.rdb.Set(ctx, cache.KeyTokenBlacklist(tokenID), "1", ttl)
 }
 
 func (s *AuthService) IsTokenRevoked(ctx context.Context, tokenID string) bool {
-	key := cache.KeyTokenBlacklist(tokenID)
-	exists, err := s.rdb.Exists(ctx, key)
+	exists, err := s.rdb.Exists(ctx, cache.KeyTokenBlacklist(tokenID))
 	if err != nil {
 		slog.Warn("redis check revoked error", "err", err)
 		return false
@@ -138,28 +134,25 @@ func (s *AuthService) IsTokenRevoked(ctx context.Context, tokenID string) bool {
 }
 
 func (s *AuthService) InvalidateUserCache(ctx context.Context, userID string) {
-	key := cache.KeyUserProfile(userID)
-	if err := s.rdb.Del(ctx, key); err != nil {
+	if err := s.rdb.Del(ctx, cache.KeyUserProfile(userID)); err != nil {
 		slog.Warn("redis del profile error", "err", err, "userID", userID)
 	}
 }
-func (s *AuthService) cacheUser(ctx context.Context, user *model.User) {
-	key := cache.KeyUserProfile(user.ID)
-	if err := s.rdb.Set(ctx, key, user, cache.TTLUserProfile*time.Second); err != nil {
+
+func (s *AuthService) cacheUser(ctx context.Context, user *model.UserResponse) {
+	if err := s.rdb.Set(ctx, cache.KeyUserProfile(user.ID), user, cache.TTLUserProfile*time.Second); err != nil {
 		slog.Warn("redis set profile error", "err", err)
 	}
 }
 
 func (s *AuthService) generateToken(userID string) (tokenStr, tokenID string, err error) {
 	jti := fmt.Sprintf("%s-%d", userID, time.Now().UnixNano())
-
 	claims := jwt.MapClaims{
 		"sub": userID,
 		"jti": jti,
 		"exp": time.Now().Add(time.Duration(s.jwtExpire) * time.Hour).Unix(),
 		"iat": time.Now().Unix(),
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := token.SignedString([]byte(s.jwtSecret))
 	return signed, jti, err
