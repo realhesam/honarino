@@ -1,0 +1,116 @@
+import LinkButton from "@/ui/LinkButton";
+import Logo from "@/ui/Logo";
+import { redirect } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import React from "react";
+import { HiArrowSmLeft } from "react-icons/hi";
+import {
+  HiOutlineChevronDoubleRight,
+  HiOutlineChevronLeft,
+  HiOutlineChevronRight,
+  HiPresentationChartLine,
+  HiUser,
+} from "react-icons/hi2";
+import Sidebar from "@/components/dashboard/Sidebar";
+
+// Fake Data...
+const user = {
+  id: "329403",
+  name: "آرش عظیمی",
+  phone: "0918 211 8080",
+  email: "arash.az@gmail.com",
+  avatar: "/images/default-user.jpg",
+  role: "user",
+};
+
+export default function DashboardLayout({
+  children,
+}: Readonly<{ children: React.ReactElement }>) {
+  return (
+    <div className="grid grid-cols-[17rem_1fr]">
+      <aside className="h-screen bg-stone-50 border-l border-stone-200">
+        <div className="h-19 px-4 flex items-center justify-between">
+          <Logo />
+          <Link
+            href="/"
+            className="*:size-5 *:stroke-2 text-stone-600 hover:scale-[1.2] transition"
+          >
+            <HiOutlineChevronDoubleRight />
+          </Link>
+        </div>
+      </aside>
+      {/* Content Wrapper */}
+      <div className="px-4">
+        {/* Top Header Dashboard */}
+        <div className="h-19 flex items-center justify-between">
+          <div className="flex gap-2 items-center">
+            <div className="size-12 rounded-full overflow-hidden relative">
+              <Image src={user.avatar} alt="image of the user" fill />
+            </div>
+            <div>
+              <h4 className="font-medium">{user.name}</h4>
+              <div className="mt-1 flex items-center gap-1 text-sm text-stone-600">
+                <span className="block size-2 rounded-full bg-blue-500"></span>
+                <span>{user.email}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2 items-stretch">
+            <div className="flex gap-1 items-center text-primary bg-primary/15 p-2 rounded-xl">
+              <span className="*:size-5">
+                <HiUser />
+              </span>
+              {user.role === "user" && <p>حساب معمولی</p>}
+              {user.role === "vendor" && <p>حساب فروشنده</p>}
+              {user.role === "admin" && <p>حساب مدیریت</p>}
+            </div>
+            <div className="flex items-center rounded-xl border border-stone-300 *:transition">
+              <button className="*:size-5 py-1 px-2 hover:scale-[1.2]">
+                <HiOutlineChevronRight />
+              </button>
+              <span className="text-stone-400">|</span>
+              <button className="*:size-5 py-1 px-2 hover:scale-[1.2]">
+                <HiOutlineChevronLeft />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Upgrade to Vendor Option*/}
+        {user.role === "user" && (
+          <div className="relative overflow-hidden p-3 rounded-xl bg-primary border border-stone-200 flex items-center justify-between">
+            {/* Presentational Shapes */}
+            <div className="absolute size-40 rounded-full bg-emerald-500 -right-5 z-20"></div>
+            <div className="absolute size-50 rounded-full bg-emerald-500/50 -right-5 z-10"></div>
+            <div className="absolute size-60 rounded-full bg-emerald-500/30 -right-5"></div>
+
+            <div className="flex gap-2 z-30">
+              <div className="size-13 p-2 *:size-full rounded-xl bg-white text-primary">
+                <HiPresentationChartLine />
+              </div>
+              <div>
+                <h5 className="p-1 rounded-xl flex gap-2 items-center w-fit text-white">
+                  <span>ارتقای حساب به تولیدی</span>
+                </h5>
+                <p className="text-sm text-stone-200">
+                  کاربر گرامی شما می توانید برای تولیدی خودتان حساب فروشنده
+                  تولید کنید و محصولات خود را با دیگران به اشتراک بزارید.
+                </p>
+              </div>
+            </div>
+            <LinkButton href="#">
+              <span>ثبت تولیدی</span>
+              <span className="*:size-5">
+                <HiArrowSmLeft />
+              </span>
+            </LinkButton>
+          </div>
+        )}
+
+        {children}
+      </div>
+    </div>
+  );
+}
