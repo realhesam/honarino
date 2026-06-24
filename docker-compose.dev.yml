@@ -56,4 +56,7 @@ volumes:
   frontend_node_modules:
   minio_data:
 
+networks:
+  default:
+    name: honarino_network
 # Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up

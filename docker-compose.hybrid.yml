@@ -48,3 +48,7 @@ services:
 volumes:
   frontend_node_modules:
   minio_data:
+
+networks:
+  default:
+    name: honarino_network
