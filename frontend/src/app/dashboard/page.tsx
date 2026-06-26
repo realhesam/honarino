@@ -1,12 +1,7 @@
-import { redirect } from "next/navigation";
-
-// fake data...
-const user = {
-  role: "user",
-};
-
-export default function DashboardPage() {
-  if (user.role === "user") return redirect("/dashboard/user");
-  if (user.role === "vendor") return redirect("/dashboard/vendor");
-  if (user.role === "admin") return redirect("/dashboard/admin");
+export default function MainPage() {
+  return (
+    <div className=" h-[calc(100dvh-10rem)] flex items-center justify-center text-3xl font-black">
+      Main Page
+    </div>
+  );
 }

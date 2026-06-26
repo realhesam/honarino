@@ -1,180 +1,134 @@
 import LinkButton from "@/ui/LinkButton";
 import Image from "next/image";
 import React from "react";
-import {
-  HiArrowSmLeft,
-  HiBadgeCheck,
-  HiChatAlt2,
-  HiViewGrid,
-  HiViewGridAdd,
-} from "react-icons/hi";
-import {
-  HiHeart,
-  HiHome,
-  HiOutlineChevronLeft,
-  HiOutlineChevronRight,
-  HiPresentationChartLine,
-  HiTicket,
-  HiTruck,
-  HiUser,
-  HiUsers,
-} from "react-icons/hi2";
-import Sidebar from "@/components/dashboard/Sidebar";
+import { HiArrowSmLeft, HiBadgeCheck, HiChatAlt2, HiViewGrid, HiViewGridAdd } from "react-icons/hi";
+import { HiHeart, HiHome, HiPresentationChartLine, HiTicket, HiTruck, HiUser, HiUsers } from "react-icons/hi2";
+import Sidebar, { NavLink } from "@/components/dashboard/Sidebar";
 import HistoryControlButton from "@/components/dashboard/HistoryControlButton";
+import NotificationBell from "@/components/dashboard/NotificationBell";
+import { UserProvider, UserData } from "@/context/UserContext";
+import { NotificationProvider } from "@/context/NotificationContext";
 
-// Fake Data...
-const user = {
+const CURRENT_USER: UserData = {
   id: "329403",
-  name: "آرش عظیمی",
+  username: "arash-az",
+  name: "kkkz",
   phone: "0918 211 8080",
   email: "arash.az@gmail.com",
+  address: "همدان - همدان - خیابان طالقانی - کوچه خیام - پلاک ۲۲۱",
   avatar: "/images/default-user.jpg",
+  queriesCount: 5,
+  favoritesCount: 2,
+  notificationsCount: 3,
   role: "user",
 };
-// Fake Links Data
-const links = {
-  user: [
-    {
-      icon: <HiUser />,
-      label: "حساب کاربری",
-      href: "/dashboard/user",
-    },
-    {
-      icon: <HiHeart />,
-      label: "تولیدی های محبوب",
-      href: "/favorites",
-    },
-    {
-      icon: <HiChatAlt2 />,
-      label: "پرسش و پاسخ",
-      href: "/queries",
-    },
-  ],
-  vendor: [
-    {
-      icon: <HiHome />,
-      label: "حساب تولیدی",
-      href: "/dashboard/vendor",
-    },
-    {
-      icon: <HiViewGrid />,
-      label: "محصولات",
-      href: "/dashboard/vendor/products",
-    },
-    {
-      icon: <HiViewGridAdd />,
-      label: "افزودن محصول",
-      href: "/dashboard/vendor/add-product",
-    },
-    {
-      icon: <HiTicket />,
-      label: "تیکت های دریافتی",
-      href: "/dashboard/vendor/tickets",
-    },
-  ],
-  admin: [
-    {
-      icon: <HiUser />,
-      label: "حساب کاربری",
-      href: "/dashboard/admin",
-    },
-    {
-      icon: <HiUsers />,
-      label: "مدیریت کاربران",
-      href: "/dashboard/admin/users",
-    },
-    {
-      icon: <HiTruck />,
-      label: "مدیریت تولیدی ها",
-      href: "/dashboard/admin/productions",
-    },
-    {
-      icon: <HiBadgeCheck />,
-      label: "درخواست های تولیدی",
-      href: "/dashboard/admin/production-requests",
-    },
-    {
-      icon: <HiTicket />,
-      label: "تیکت های دریافتی",
-      href: "/dashboard/admin/tickets",
-    },
-  ],
+
+const userLinks: NavLink[] = [
+  { icon: <HiUser />, label: "حساب کاربری", href: "/dashboard/account" },
+  { icon: <HiHeart />, label: "تولیدی های محبوب", href: "/dashboard/user/favorites" },
+  { icon: <HiChatAlt2 />, label: "پرسش و پاسخ", href: "/dashboard/user/queries" },
+];
+
+const vendorLinks: NavLink[] = [
+  { icon: <HiHome />, label: "حساب تولیدی", href: "/dashboard/vendor" },
+  { icon: <HiViewGrid />, label: "محصولات", href: "/dashboard/vendor/products" },
+  { icon: <HiViewGridAdd />, label: "افزودن محصول", href: "/dashboard/vendor/add-product" },
+  { icon: <HiTicket />, label: "تیکت های دریافتی", href: "/dashboard/vendor/tickets" },
+];
+
+const adminLinks: NavLink[] = [
+  { icon: <HiUser />, label: "حساب کاربری", href: "/dashboard/admin" },
+  { icon: <HiUsers />, label: "مدیریت کاربران", href: "/dashboard/admin/users" },
+  { icon: <HiTruck />, label: "مدیریت تولیدی ها", href: "/dashboard/admin/productions" },
+  { icon: <HiBadgeCheck />, label: "درخواست های تولیدی", href: "/dashboard/admin/production-requests" },
+  { icon: <HiTicket />, label: "تیکت های دریافتی", href: "/dashboard/admin/tickets" },
+];
+
+const LINKS_BY_ROLE: Record<UserData["role"], NavLink[]> = {
+  user:   userLinks,
+  vendor: [...userLinks, ...vendorLinks],
+  admin:  [...userLinks, ...vendorLinks, ...adminLinks],
 };
 
 export default function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactElement }>) {
+  const user = CURRENT_USER;
+
   return (
-    <div className="lg:grid lg:grid-cols-[17rem_1fr]">
-      <Sidebar links={links[user.role]} />
+    <UserProvider user={user}>
+      <NotificationProvider>
+      <div className="flex h-screen overflow-hidden bg-stone-50">
 
-      {/* Content Wrapper */}
-      <div className="px-3 sm:px-4">
-        {/* Top Header Dashboard */}
-        <div className="min-h-16 lg:h-19 py-3 lg:py-0 flex flex-wrap lg:flex-nowrap items-center justify-between gap-3">
-          <div className="mr-8 flex gap-2 items-center min-w-0 lg:mr-0">
-            <div className="size-10 sm:size-12 rounded-full overflow-hidden relative shrink-0">
-              <Image src={user.avatar} alt="image of the user" fill />
-            </div>
-            <div className="min-w-0">
-              <h4 className="font-medium truncate">{user.name}</h4>
-              <div className="mt-1 flex items-center gap-1 text-sm text-stone-600">
-                <span className="block size-2 rounded-full bg-blue-500 shrink-0"></span>
-                <span className="truncate">{user.email}</span>
+        <Sidebar links={LINKS_BY_ROLE[user.role]} />
+
+        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto no-scrollbar scroll-smooth">
+
+          <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-stone-200/60 transition-all">
+            <div className="flex flex-col gap-3 px-4 py-3 sm:px-6 min-h-16 justify-center lg:h-20 lg:py-0">
+              <div className="flex items-center justify-between gap-4 w-full">
+
+                <div className="flex gap-3 items-center min-w-0 pr-12 lg:pr-0">
+                  <div className="size-10 rounded-full overflow-hidden relative shrink-0 ring-2 ring-stone-100 shadow-sm">
+                    <Image src={user.avatar} alt="تصویر کاربر" fill className="object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-semibold text-stone-800 text-sm truncate">{user.name}</h4>
+                    <div className="flex items-center gap-1.5 text-xs text-stone-400 mt-0.5">
+                      <span className="block size-1.5 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+                      <span className="truncate">{user.email}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 items-center shrink-0">
+                  <div className="flex items-center gap-1 p-1 rounded-xl">
+                    <NotificationBell />
+                    <HistoryControlButton />
+                  </div>
+                </div>
+
               </div>
             </div>
-          </div>
+          </header>
 
-          <div className="flex gap-2 items-stretch order-3 lg:order-0 w-full lg:w-auto justify-between lg:justify-end">
-            <div className="flex gap-1 items-center text-primary bg-primary/15 p-2 rounded-xl whitespace-nowrap">
-              <span className="*:size-5 shrink-0">
-                <HiUser />
-              </span>
-              {user.role === "user" && <p>حساب معمولی</p>}
-              {user.role === "vendor" && <p>حساب فروشنده</p>}
-              {user.role === "admin" && <p>حساب مدیریت</p>}
-            </div>
-            <HistoryControlButton />
-          </div>
+          <main className="flex-1 px-4 sm:px-6 py-6">
+            {user.role === "user" && (
+              <div className="relative overflow-hidden mb-6 p-4 rounded-2xl bg-primary flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-md shadow-primary/10">
+                <div className="hidden md:block absolute size-40 rounded-full bg-white/10 -right-5 -bottom-5 z-10" />
+                <div className="hidden md:block absolute size-56 rounded-full bg-white/5 -right-10 -bottom-10 z-0" />
+                
+                <div className="flex gap-3 z-20 relative items-center">
+                  <div className="size-11 p-2 rounded-xl bg-white/10 text-white backdrop-blur-md shrink-0 flex items-center justify-center">
+                    <HiPresentationChartLine className="size-6" />
+                  </div>
+                  <div>
+                    <h5 className="text-white font-semibold text-sm lg:text-base">
+                      ارتقای حساب به تولیدی
+                    </h5>
+                    <p className="text-xs text-stone-100/90 max-w-xl mt-1 leading-relaxed">
+                      کاربر گرامی شما می توانید برای تولیدی خودتان حساب فروشنده
+                      تولید کنید و محصولات خود را با دیگران به اشتراک بگذارید.
+                    </p>
+                  </div>
+                </div>
+                
+                <LinkButton
+                  variation="btn-light"
+                  href="#"
+                  customClass="px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-primary font-medium text-xs shadow-sm shrink-0 z-20 relative flex items-center gap-1.5 self-end md:self-auto"
+                >
+                  <span>تغییر به تولیدی</span>
+                  <HiArrowSmLeft className="size-4 transition-transform group-hover:-translate-x-1" />
+                </LinkButton>
+              </div>
+            )}
+
+            {children}
+          </main>
         </div>
-
-        {/* Upgrade to Vendor Option*/}
-        {user.role === "user" && (
-          <div className="relative overflow-hidden mb-5 p-3 rounded-xl bg-primary flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            {/* Presentational Shapes - hidden on very small screens to avoid clutter, scaled down on sm */}
-            <div className="hidden sm:block absolute size-28 sm:size-40 rounded-full bg-emerald-500 -left-5 sm:-right-5 sm:left-auto z-20"></div>
-            <div className="hidden sm:block absolute size-36 sm:size-50 rounded-full bg-emerald-500/50 -left-5 sm:-right-5 sm:left-auto z-10"></div>
-            <div className="hidden sm:block absolute size-44 sm:size-60 rounded-full bg-emerald-500/30 -left-5 sm:-right-5 sm:left-auto"></div>
-
-            <div className="flex gap-2 z-30 relative">
-              <div className="size-13 p-2 *:size-full rounded-xl bg-white text-primary shrink-0">
-                <HiPresentationChartLine />
-              </div>
-              <div>
-                <h5 className="p-1 rounded-xl flex gap-2 items-center w-fit text-white">
-                  <span>ارتقای حساب به تولیدی</span>
-                </h5>
-                <p className="text-xs text-stone-200 lg:text-sm">
-                  کاربر گرامی شما می توانید برای تولیدی خودتان حساب فروشنده
-                  تولید کنید و محصولات خود را با دیگران به اشتراک بزارید.
-                </p>
-              </div>
-            </div>
-            <LinkButton
-              variation="btn-light"
-              href="#"
-              customClass="px-2 rounded-xl bg-white hover:bg-primary hover:text-white text-xs"
-            >
-              <span className="">تغییر به تولیدی</span>
-              <span className="*:size-5">
-                <HiArrowSmLeft />
-              </span>
-            </LinkButton>
-          </div>
-        )}
-
-        {children}
       </div>
-    </div>
+      </NotificationProvider>
+    </UserProvider>
   );
 }

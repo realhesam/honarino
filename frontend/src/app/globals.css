@@ -39,6 +39,14 @@
   .container {
     @apply px-2.5 mx-auto xl:max-w-[1480px] sm:px-5;
   }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 @layer components {

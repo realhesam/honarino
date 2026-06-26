@@ -8,95 +8,117 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { HiOutlineLogin, HiOutlineMenu, HiOutlineX } from "react-icons/hi";
-import { HiChevronRight, HiOutlineChevronDoubleRight } from "react-icons/hi2";
+import { HiChevronLeft, HiOutlineChevronDoubleRight } from "react-icons/hi2";
 
-export default function Sidebar({ links }: { links: any }) {
-  const [scroll, setScroll] = useState<null | number>(null);
+export interface NavLink {
+  href: string;
+  label: string;
+  icon: React.ReactElement;
+}
+
+export default function Sidebar({ links }: { links: NavLink[] }) {
+  const [scrolled, setScrolled] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { ref } = useOutsideClick(setIsSidebarOpen);
   const pathname = usePathname();
 
   useEffect(() => {
-    window.addEventListener("scroll", () => {
-      setScroll(window.scrollY);
-    });
+    const onScroll = () => setScrolled(window.scrollY >= 10);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [pathname]);
 
   return (
     <>
       <button
         onClick={() => setIsSidebarOpen(true)}
-        className={`fixed top-5 right-3 z-40 *:size-7 *:stroke-2 text-stone-600 hover:scale-[1.1] lg:hidden shrink-0 transition-all ${scroll || 0 >= 10 ? "p-2 bg-white shadow-xl rounded-xl border border-stone-200" : "bg-transparent"}`}
+        className={`fixed top-4 right-4 z-40 p-2.5 rounded-xl border transition-all lg:hidden shrink-0 text-stone-600 active:scale-95 bg-white border-transparent`}
         aria-label="باز کردن منو"
       >
-        <HiOutlineMenu />
+        <HiOutlineMenu className="size-6" />
       </button>
 
       {isSidebarOpen && <Overlay />}
 
-      {/* Sidebar panel */}
       <aside
         ref={ref}
-        className={`fixed flex flex-col pb-2 inset-y-0 right-0 z-50 w-64 max-w-[80vw] bg-stone-50 border-l border-stone-200 transition-transform duration-300
-          ${isSidebarOpen ? "translate-x-0" : "translate-x-full"}
-          lg:static lg:z-auto lg:w-auto lg:max-w-none lg:translate-x-0 lg:h-screen`}
+        className={`fixed inset-y-0 right-0 z-50 flex flex-col w-72 max-w-[85vw] bg-white border-l border-stone-200/80 transition-transform duration-300 ease-in-out
+          ${isSidebarOpen ? "translate-x-0 shadow-2xl" : "translate-x-full"}
+          lg:sticky lg:top-0 lg:z-auto lg:translate-x-0 lg:h-screen lg:bg-stone-50/50`}
       >
-        <div className="h-16 lg:h-19 px-4 flex items-center justify-between border-b border-stone-200">
+        <div className="h-16 lg:h-20 px-5 flex items-center justify-between border-b border-stone-200/60 shrink-0">
           <Logo />
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsSidebarOpen(false)}
-              className="*:size-5 *:stroke-2 text-stone-600 hover:scale-[1.2] transition lg:hidden"
+              className="p-1.5 rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-800 transition lg:hidden"
               aria-label="بستن منو"
             >
-              <HiOutlineX />
+              <HiOutlineX className="size-5" />
             </button>
             <Link
               href="/"
-              className="hidden lg:inline-flex *:size-5 *:stroke-2 text-stone-600 hover:scale-[1.2] transition"
+              className="hidden lg:flex p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-700 transition"
+              title="بازگشت به خانه"
             >
-              <HiOutlineChevronDoubleRight />
+              <HiOutlineChevronDoubleRight className="size-5" />
             </Link>
           </div>
         </div>
-        <div className="flex flex-col items-stretch">
-          {links.map(
-            (link: {
-              href: string;
-              label: string;
-              icon: React.ReactElement;
-            }) => (
+
+        <nav className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1.5 custom-scrollbar">
+          {links.map((link) => {
+            const isActive = pathname === link.href;
+            return (
               <LinkButton
                 href={link.href}
                 key={link.href}
                 variation="btn-light"
-                customClass={`relative py-3 rounded-none text-stone-600 bg-stone-50 gap-2.5 justify-start hover:bg-stone-100 ${pathname === link.href ? "*:text-stone-800" : ""}`}
+                customClass={`relative group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 justify-start border border-transparent
+                  ${
+                    isActive
+                      ? "bg-primary/10 text-primary border-primary/5 font-medium"
+                      : "text-stone-600 hover:bg-stone-100/80 hover:text-stone-900"
+                  }`}
               >
+                {isActive && (
+                  <span className="absolute right-0 top-3 bottom-3 w-1 bg-primary rounded-l-full" />
+                )}
+
                 <span
-                  className={`*:size-6 text-stone-400 ${pathname === link.href && "*:text-primary"}`}
+                  className={`shrink-0 transition-colors duration-200 *:size-5.5
+                    ${isActive ? "text-primary" : "text-stone-400 group-hover:text-stone-600"}`}
                 >
                   {link.icon}
                 </span>
-                <span className="text-stone-500">{link.label}</span>
+
+                <span className="text-sm">{link.label}</span>
+
                 <span
-                  className={`absolute left-1 text-stone-300 ${pathname === link.href && "rotate-180 text-stone-800"}`}
+                  className={`mr-auto transition-transform duration-200 *:size-4
+                    ${isActive ? "text-primary translate-x-0" : "text-stone-300 opacity-0 group-hover:opacity-100 group-hover:-translate-x-1"}`}
                 >
-                  <HiChevronRight />
+                  <HiChevronLeft />
                 </span>
               </LinkButton>
-            ),
-          )}
+            );
+          })}
+        </nav>
+
+        <div className="p-4 border-t border-stone-200/60 shrink-0 bg-gradient-to-t from-white to-transparent lg:from-stone-50/50">
+          <LinkButton
+            href="/logout"
+            variation="btn-dim"
+            customClass="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-100/50 transition-colors"
+          >
+            <HiOutlineLogin className="size-5 shrink-0" />
+            <span className="text-sm font-medium">خروج از حساب</span>
+          </LinkButton>
         </div>
-        <LinkButton
-          href="/logout"
-          variation="btn-dim"
-          customClass="mx-2 mt-auto"
-        >
-          <span className="*:size-6">
-            <HiOutlineLogin />
-          </span>
-          <span>خروج از حساب</span>
-        </LinkButton>
       </aside>
     </>
   );

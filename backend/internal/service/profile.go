@@ -78,6 +78,10 @@ func (s *ProfileService) ChangePassword(ctx context.Context, userID, currentPass
 		return fmt.Errorf("new password must be at least 8 characters")
 	}
 
+	if currentPassword == newPassword {
+		return fmt.Errorf("new password must be different from current password")
+	}
+
 	uid, err := parseUUID(userID)
 	if err != nil {
 		return ErrUserNotFound
