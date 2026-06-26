@@ -20,6 +20,7 @@ import {
   HiUsers,
 } from "react-icons/hi2";
 import Sidebar from "@/components/dashboard/Sidebar";
+import HistoryControlButton from "@/components/dashboard/HistoryControlButton";
 
 // Fake Data...
 const user = {
@@ -133,21 +134,13 @@ export default function DashboardLayout({
               {user.role === "vendor" && <p>حساب فروشنده</p>}
               {user.role === "admin" && <p>حساب مدیریت</p>}
             </div>
-            <div className="flex items-center rounded-xl border border-stone-300 *:transition shrink-0">
-              <button className="*:size-5 py-1 px-2 hover:scale-[1.2]">
-                <HiOutlineChevronRight />
-              </button>
-              <span className="text-stone-400">|</span>
-              <button className="*:size-5 py-1 px-2 hover:scale-[1.2]">
-                <HiOutlineChevronLeft />
-              </button>
-            </div>
+            <HistoryControlButton />
           </div>
         </div>
 
         {/* Upgrade to Vendor Option*/}
         {user.role === "user" && (
-          <div className="relative overflow-hidden p-3 rounded-xl bg-primary flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="relative overflow-hidden mb-5 p-3 rounded-xl bg-primary flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             {/* Presentational Shapes - hidden on very small screens to avoid clutter, scaled down on sm */}
             <div className="hidden sm:block absolute size-28 sm:size-40 rounded-full bg-emerald-500 -left-5 sm:-right-5 sm:left-auto z-20"></div>
             <div className="hidden sm:block absolute size-36 sm:size-50 rounded-full bg-emerald-500/50 -left-5 sm:-right-5 sm:left-auto z-10"></div>
@@ -161,7 +154,7 @@ export default function DashboardLayout({
                 <h5 className="p-1 rounded-xl flex gap-2 items-center w-fit text-white">
                   <span>ارتقای حساب به تولیدی</span>
                 </h5>
-                <p className="text-xs text-stone-200 md:text-sm">
+                <p className="text-xs text-stone-200 lg:text-sm">
                   کاربر گرامی شما می توانید برای تولیدی خودتان حساب فروشنده
                   تولید کنید و محصولات خود را با دیگران به اشتراک بزارید.
                 </p>
@@ -170,9 +163,9 @@ export default function DashboardLayout({
             <LinkButton
               variation="btn-light"
               href="#"
-              customClass="rounded-xl bg-white hover:bg-primary hover:text-white sm:size-10"
+              customClass="px-2 rounded-xl bg-white hover:bg-primary hover:text-white text-xs"
             >
-              <span className="sm:hidden">تغییر حساب به تولیدی</span>
+              <span className="">تغییر به تولیدی</span>
               <span className="*:size-5">
                 <HiArrowSmLeft />
               </span>
