@@ -6,25 +6,27 @@ import Overlay from "@/ui/Overlay";
 import { useOutsideClick } from "@/utils/useOutsideClick";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { HiOutlineLogin, HiOutlineMenu, HiOutlineX } from "react-icons/hi";
-import {
-  HiChevronLeft,
-  HiChevronRight,
-  HiOutlineChevronDoubleRight,
-} from "react-icons/hi2";
+import { HiChevronRight, HiOutlineChevronDoubleRight } from "react-icons/hi2";
 
 export default function Sidebar({ links }: { links: any }) {
+  const [scroll, setScroll] = useState<null | number>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { ref } = useOutsideClick(setIsSidebarOpen);
   const pathname = usePathname();
-  console.log(pathname);
+
+  useEffect(() => {
+    window.addEventListener("scroll", () => {
+      setScroll(window.scrollY);
+    });
+  }, []);
 
   return (
     <>
       <button
         onClick={() => setIsSidebarOpen(true)}
-        className="fixed top-5 right-3 z-30 *:size-7 *:stroke-2 text-stone-600 hover:scale-[1.1] transition lg:hidden shrink-0"
+        className={`fixed top-5 right-3 z-40 *:size-7 *:stroke-2 text-stone-600 hover:scale-[1.1] lg:hidden shrink-0 transition-all ${scroll || 0 >= 10 ? "p-2 bg-white shadow-xl rounded-xl border border-stone-200" : "bg-transparent"}`}
         aria-label="باز کردن منو"
       >
         <HiOutlineMenu />
@@ -58,26 +60,32 @@ export default function Sidebar({ links }: { links: any }) {
           </div>
         </div>
         <div className="flex flex-col items-stretch">
-          {links.map((link) => (
-            <LinkButton
-              href={link.href}
-              key={link.href}
-              variation="btn-light"
-              customClass={`relative py-3 rounded-none text-stone-600 bg-stone-50 gap-2.5 justify-start hover:bg-stone-100 ${pathname === link.href ? "*:text-stone-800" : ""}`}
-            >
-              <span
-                className={`*:size-6 text-stone-400 ${pathname === link.href && "*:text-primary"}`}
+          {links.map(
+            (link: {
+              href: string;
+              label: string;
+              icon: React.ReactElement;
+            }) => (
+              <LinkButton
+                href={link.href}
+                key={link.href}
+                variation="btn-light"
+                customClass={`relative py-3 rounded-none text-stone-600 bg-stone-50 gap-2.5 justify-start hover:bg-stone-100 ${pathname === link.href ? "*:text-stone-800" : ""}`}
               >
-                {link.icon}
-              </span>
-              <span className="text-stone-500">{link.label}</span>
-              <span
-                className={`absolute left-1 text-stone-300 ${pathname === link.href && "rotate-180 text-stone-800"}`}
-              >
-                <HiChevronRight />
-              </span>
-            </LinkButton>
-          ))}
+                <span
+                  className={`*:size-6 text-stone-400 ${pathname === link.href && "*:text-primary"}`}
+                >
+                  {link.icon}
+                </span>
+                <span className="text-stone-500">{link.label}</span>
+                <span
+                  className={`absolute left-1 text-stone-300 ${pathname === link.href && "rotate-180 text-stone-800"}`}
+                >
+                  <HiChevronRight />
+                </span>
+              </LinkButton>
+            ),
+          )}
         </div>
         <LinkButton
           href="/logout"
