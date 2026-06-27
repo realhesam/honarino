@@ -1,4 +1,4 @@
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { ApiError } from './ApiError';
 import { AppError } from './AppError';
 
@@ -7,20 +7,24 @@ export function mapToAppError(error: unknown): AppError {
     return error;
   }
 
-  // Axios error
-  if ((error as AxiosError).isAxiosError) {
-    const axiosError = error as AxiosError<any>;
+  if (axios.isAxiosError(error)) {
+    const responseData = error.response?.data;
+
+    const serverMessage =
+      responseData?.message || 
+      responseData?.error || 
+      (typeof responseData === 'string' ? responseData : null) || 
+      'خطای ارتباط با سرور';
 
     return new ApiError(
-      axiosError.response?.data?.message || 'خطای ارتباط با سرور',
-      axiosError.response?.status,
+      serverMessage,
+      error.response?.status,
       error
     );
   }
 
-  // fallback
   return new AppError({
-    message: 'خطای ناشناخته‌ای رخ داد',
+    message: error instanceof Error ? error.message : 'خطای ناشناخته‌ای رخ داد',
     code: 'UNKNOWN_ERROR',
     originalError: error,
   });

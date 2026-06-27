@@ -9,13 +9,11 @@ const nextConfig: NextConfig = {
       {
         protocol: "http",
         hostname: "**",
-        port: "**",
         pathname: "/**",
       },
       {
         protocol: "https",
         hostname: "**",
-        port: "**",
         pathname: "/**",
       },
     ],

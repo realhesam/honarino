@@ -72,14 +72,14 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, userID string, req *
 
 func (s *ProfileService) ChangePassword(ctx context.Context, userID, currentPassword, newPassword string) error {
 	if currentPassword == "" || newPassword == "" {
-		return fmt.Errorf("current and new passwords are required")
+		return ErrValidationFailed
 	}
 	if len(newPassword) < 8 {
-		return fmt.Errorf("new password must be at least 8 characters")
+		return ErrValidationFailed
 	}
 
 	if currentPassword == newPassword {
-		return fmt.Errorf("new password must be different from current password")
+		return ErrSamePassword
 	}
 
 	uid, err := parseUUID(userID)

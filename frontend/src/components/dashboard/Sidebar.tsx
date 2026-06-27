@@ -111,7 +111,7 @@ export default function Sidebar({ links }: { links: NavLink[] }) {
 
         <div className="p-4 border-t border-stone-200/60 shrink-0 bg-gradient-to-t from-white to-transparent lg:from-stone-50/50">
           <LinkButton
-            href="/logout"
+            href="/auth/logout"
             variation="btn-dim"
             customClass="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-100/50 transition-colors"
           >

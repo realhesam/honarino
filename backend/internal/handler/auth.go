@@ -34,11 +34,8 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 
 	resp, err := h.authService.Register(c.Context(), &req)
 	if err != nil {
-		if errors.Is(err, service.ErrEmailTaken) || errors.Is(err, service.ErrUsernameTaken) {
-			return c.Status(fiber.StatusConflict).JSON(model.ErrorResponse{Error: "email or username already registered"})
-		}
 		slog.Error("register failed", "err", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(model.ErrorResponse{Error: "internal server error"})
+		return handleError(c, err, "internal server error")
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(resp)
@@ -55,11 +52,8 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 
 	resp, err := h.authService.Login(c.Context(), &req)
 	if err != nil {
-		if errors.Is(err, service.ErrInvalidCreds) {
-			return c.Status(fiber.StatusUnauthorized).JSON(model.ErrorResponse{Error: "invalid username or password"})
-		}
 		slog.Error("login failed", "err", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(model.ErrorResponse{Error: "internal server error"})
+		return handleError(c, err, "internal server error")
 	}
 
 	return c.JSON(resp)
@@ -74,7 +68,6 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"message": "logged out successfully"})
 }
-
 
 func formatValidationErrors(err error) map[string]string {
 	errs := make(map[string]string)

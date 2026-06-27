@@ -4,7 +4,7 @@ import { AppError } from "@/lib/core/errors/AppError";
 import { AuthService } from "@/lib/modules/auth/auth.service";
 import LinkButton from "@/ui/LinkButton";
 import { useNotification } from "@/utils/useNotification";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 function Page() {
@@ -13,6 +13,7 @@ function Page() {
   const [loading, setLoading] = useState(false);
 
   const notification = useNotification();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,8 +28,9 @@ function Page() {
       notification.success("با موفقیت وارد شدید");
 
       setTimeout(() => {
-        //redirect("/account");
+        router.push("/dashboard");
       }, 100);
+      
     } catch (error) {
       if (error instanceof AppError) {
         notification.error(error.message);
@@ -42,10 +44,7 @@ function Page() {
 
   return (
     <div>
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col items-center gap-5"
-      >
+      <form onSubmit={handleSubmit} className="flex flex-col items-center gap-5">
         <input
           type="text"
           placeholder="نام کاربری"

@@ -1,29 +1,30 @@
 "use client";
 
-import InputRow from "@/ui/InputRow";
 import { useState, FormEvent, useRef, ChangeEvent } from "react";
-import { HiUser, HiEnvelope, HiPhone, HiMapPin, HiIdentification, HiCamera, HiTrash } from "react-icons/hi2";
+import { HiUser, HiEnvelope, HiPhone, HiMapPin, HiIdentification, HiCamera, HiTrash, HiArrowUpTray } from "react-icons/hi2";
+import InputRow from "@/ui/InputRow";
+import { useUser } from "@/context/UserContext";
+import { useNotification } from "@/utils/useNotification";
 
-interface User {
-  username: string;
-  name: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  avatarUrl?: string;
-}
-
-interface EditProfileFormProps {
-  user: User;
-}
-
-export default function EditProfileForm({ user }: EditProfileFormProps) {
-  const { username, name, phone, email, address, avatarUrl } = user;
-  
+export default function EditProfileForm() {
+  const { user, updateProfile } = useUser();
+  const notification = useNotification();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  if (!user) return null;
+
+  const [formData, setFormData] = useState({
+    username: user.username,
+    name: user.name,
+    phone: user.phone,
+    email: user.email,
+    address: user.address,
+  });
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(avatarUrl || null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(user.avatar || null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const baseInputClass = 
     "w-full text-sm text-stone-800 bg-stone-50/50 placeholder-stone-400/70 " +
@@ -32,11 +33,17 @@ export default function EditProfileForm({ user }: EditProfileFormProps) {
     "hover:border-stone-300 hover:bg-stone-50/80 " +
     "transition-all duration-200 shadow-sm";
 
+  function handleInputChange(e: ChangeEvent<HTMLInputElement>) {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  }
+
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
+      setUploadProgress(null);
     }
   }
 
@@ -45,14 +52,27 @@ export default function EditProfileForm({ user }: EditProfileFormProps) {
     e.stopPropagation();
     setSelectedFile(null);
     setPreviewUrl(null);
+    setUploadProgress(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
+
+    try {
+      await updateProfile(formData, selectedFile, (percent) => {
+        setUploadProgress(percent);
+      });
+      
+      notification.success("تغییرات حساب کاربری با موفقیت ذخیره شد");
+      setSelectedFile(null);
+    } catch (error: any) {
+      notification.error(error?.message || "خطا در ذخیره‌سازی اطلاعات");
+      setUploadProgress(null);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -65,13 +85,15 @@ export default function EditProfileForm({ user }: EditProfileFormProps) {
 
       <div className="p-6 flex flex-col xl:flex-row gap-8 items-start w-full">
         
-        <div className="flex flex-col items-center gap-3 shrink-0 mx-auto xl:mx-0 w-full xl:w-auto">
+        <div className="flex flex-col items-center gap-4 shrink-0 mx-auto xl:mx-0 w-full xl:w-auto">
           <label className="text-xs font-semibold text-stone-500 block text-center">تصویر پروفایل</label>
+          
           <div 
-            onClick={() => fileInputRef.current?.click()}
-            className="group relative size-32 rounded-3xl overflow-hidden border-2 border-dashed border-stone-200 hover:border-primary bg-stone-50 flex items-center justify-center cursor-pointer shadow-inner transition-all duration-300"
+            onClick={() => !isSubmitting && fileInputRef.current?.click()}
+            className={`group relative size-32 rounded-3xl overflow-hidden border-2 border-dashed bg-stone-50 flex items-center justify-center shadow-inner transition-all duration-300 ${isSubmitting ? 'border-primary/40 cursor-not-allowed' : 'border-stone-200 hover:border-primary cursor-pointer'}`}
           >
-            <input ref={fileInputRef} type="file" name="userImage" accept="image/*" className="hidden" onChange={handleFileChange} />
+            <input ref={fileInputRef} type="file" name="userImage" accept="image/*" className="hidden" onChange={handleFileChange} disabled={isSubmitting} />
+            
             {previewUrl ? (
               <img src={previewUrl} alt="Avatar" className="size-full object-cover group-hover:scale-105 transition-transform duration-300" />
             ) : (
@@ -80,11 +102,37 @@ export default function EditProfileForm({ user }: EditProfileFormProps) {
                 <span className="text-[10px] font-medium px-2 text-center leading-normal">انتخاب تصویر</span>
               </div>
             )}
+            
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
               <HiCamera className="size-6 text-white" />
             </div>
+
+            {uploadProgress !== null && uploadProgress < 100 && (
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-1.5 animate-pulse">
+                <HiArrowUpTray className="size-5 text-primary animate-bounce" />
+                <span className="text-xs font-bold text-primary">{uploadProgress}%</span>
+              </div>
+            )}
           </div>
-          {previewUrl && (
+
+          {uploadProgress !== null && (
+            <div className="w-full max-w-[140px] flex flex-col gap-1.5">
+              <div className="flex justify-between items-center text-[10px] font-semibold">
+                <span className={uploadProgress === 100 ? "text-green-600" : "text-stone-500"}>
+                  {uploadProgress === 100 ? "پردازش نهایی..." : "در حال آپلود..."}
+                </span>
+                <span className="font-bold text-stone-700">{uploadProgress}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-stone-100 rounded-full overflow-hidden border border-stone-200/50">
+                <div 
+                  className={`h-full rounded-full transition-all duration-300 ease-out ${uploadProgress === 100 ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)]'}`}
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {previewUrl && !isSubmitting && (
             <button onClick={handleRemoveFile} className="flex items-center gap-1 text-[11px] font-medium text-red-500 hover:text-red-600 bg-red-50/60 px-2.5 py-1 rounded-lg border border-red-100/50 transition-colors">
               <HiTrash className="size-3.5" />
               <span>حذف تصویر</span>
@@ -93,7 +141,6 @@ export default function EditProfileForm({ user }: EditProfileFormProps) {
         </div>
 
         <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-          
           <InputRow label="نام کاربری" htmlFor="username">
             <div className="relative flex items-center">
               <HiIdentification className="absolute left-3.5 size-4.5 text-stone-400 z-10" />
@@ -102,7 +149,8 @@ export default function EditProfileForm({ user }: EditProfileFormProps) {
                 type="text" 
                 name="username" 
                 id="username" 
-                defaultValue={username} 
+                value={formData.username} 
+                onChange={handleInputChange}
                 placeholder="مثلا: amir_dev" 
                 dir="ltr" 
                 required 
@@ -113,7 +161,16 @@ export default function EditProfileForm({ user }: EditProfileFormProps) {
           <InputRow label="نام و نام خانوادگی" htmlFor="name">
             <div className="relative flex items-center">
               <HiUser className="absolute right-3.5 size-4.5 text-stone-400" />
-              <input className={`${baseInputClass} pr-10 pl-4`} name="name" id="name" type="text" defaultValue={name} placeholder="نام خود را وارد کنید" required />
+              <input 
+                className={`${baseInputClass} pr-10 pl-4`} 
+                name="name" 
+                id="name" 
+                type="text" 
+                value={formData.name} 
+                onChange={handleInputChange}
+                placeholder="نام خود را وارد کنید" 
+                required 
+              />
             </div>
           </InputRow>
 
@@ -125,7 +182,8 @@ export default function EditProfileForm({ user }: EditProfileFormProps) {
                 type="tel" 
                 name="phone" 
                 id="phone" 
-                defaultValue={phone} 
+                value={formData.phone} 
+                onChange={handleInputChange}
                 placeholder="09123456789" 
                 dir="ltr" 
               />
@@ -140,7 +198,8 @@ export default function EditProfileForm({ user }: EditProfileFormProps) {
                 type="email" 
                 name="email" 
                 id="email" 
-                defaultValue={email} 
+                value={formData.email} 
+                onChange={handleInputChange}
                 placeholder="example@domain.com" 
                 dir="ltr" 
               />
@@ -151,7 +210,15 @@ export default function EditProfileForm({ user }: EditProfileFormProps) {
             <InputRow label="آدرس دقیق محل سکونت یا کار" htmlFor="address">
               <div className="relative flex items-center">
                 <HiMapPin className="absolute right-3.5 size-4.5 text-stone-400" />
-                <input className={`${baseInputClass} pr-10 pl-4`} type="text" name="address" id="address" defaultValue={address} placeholder="نشانی دقیق محل سکونت یا کار خود را وارد کنید..." />
+                <input 
+                  className={`${baseInputClass} pr-10 pl-4`} 
+                  type="text" 
+                  name="address" 
+                  id="address" 
+                  value={formData.address} 
+                  onChange={handleInputChange}
+                  placeholder="نشانی دقیق محل سکونت یا کار خود را وارد کنید..." 
+                />
               </div>
             </InputRow>
           </div>
@@ -160,7 +227,11 @@ export default function EditProfileForm({ user }: EditProfileFormProps) {
       </div>
 
       <div className="px-6 py-4 bg-stone-50/30 border-t border-stone-100 flex items-center justify-end gap-3">
-        <button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/95 text-white font-semibold text-xs px-6 py-2.5 rounded-xl shadow-sm min-w-[140px] flex items-center justify-center">
+        <button 
+          type="submit" 
+          disabled={isSubmitting} 
+          className="bg-primary hover:bg-primary/95 text-white font-semibold text-xs px-6 py-2.5 rounded-xl shadow-sm min-w-[140px] flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+        >
           {isSubmitting ? "در حال ذخیره..." : "ذخیره تغییرات"}
         </button>
       </div>

@@ -15,15 +15,6 @@ import (
 	"backend/internal/model"
 )
 
-var (
-	ErrEmailTaken    = errors.New("ایمیل قبلا ثبت شده است")
-	ErrUsernameTaken = errors.New("نام کاربری قبلا ثبت شده است")
-	ErrPhoneTaken    = errors.New("شماره تلفن قبلا ثبت شده است")
-	ErrInvalidCreds  = errors.New("نام کاربری یا رمز عبور اشتباه است")
-	ErrUserNotFound  = errors.New("کاربر یافت نشد")
-	ErrTokenRevoked  = errors.New("توکن لغو شده است")
-)
-
 type AuthService struct {
 	queries   *dbsqlc.Queries
 	rdb       *cache.Redis

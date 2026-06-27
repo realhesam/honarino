@@ -4,8 +4,10 @@ import EditProfileForm from "@/components/dashboard/EditProfileForm";
 import LinkButton from "@/ui/LinkButton";
 import ShowCurrentTime from "@/ui/ShowCurrentTime";
 import Image from "next/image";
+import { useState } from "react";
 import { HiChatBubbleLeftRight, HiMiniBellAlert, HiMiniHeart, HiKey } from "react-icons/hi2";
 import { useUser } from "@/context/UserContext";
+import ChangePasswordModal from "@/components/dashboard/ChangePasswordModal";
 
 function roleLabel(role: string) {
   if (role === "vendor") return "حساب تولیدی";
@@ -14,6 +16,7 @@ function roleLabel(role: string) {
 }
 
 export default function UserSettings() {
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const { user } = useUser();
 
   return (
@@ -42,6 +45,7 @@ export default function UserSettings() {
                 alt="user-avatar" 
                 fill 
                 className="rounded-full object-cover" 
+                unoptimized
               />
             ) : (
               <span className="text-xl font-bold text-stone-400">
@@ -67,6 +71,7 @@ export default function UserSettings() {
 
           <LinkButton 
             customClass="mt-5 w-full z-10 py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
+            onClick={() => setIsPasswordModalOpen(true)}
           >
             <HiKey className="size-4 shrink-0" />
             <span>تغییر رمز عبور</span>
@@ -103,6 +108,11 @@ export default function UserSettings() {
         </div>
 
       </div>
+      <ChangePasswordModal 
+        isOpen={isPasswordModalOpen} 
+        onClose={() => setIsPasswordModalOpen(false)} 
+      />
     </div>
+    
   );
 }

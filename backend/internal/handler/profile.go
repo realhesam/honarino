@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -26,7 +25,8 @@ func (h *ProfileHandler) Profile(c *fiber.Ctx) error {
 
 	user, err := h.profileService.GetProfile(c.Context(), userID)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(model.ErrorResponse{Error: "user not found"})
+		slog.Error("get profile failed", "err", err)
+		return handleError(c, err, "internal server error")
 	}
 	return c.JSON(user)
 }
@@ -45,11 +45,8 @@ func (h *ProfileHandler) UpdateProfile(c *fiber.Ctx) error {
 
 	user, err := h.profileService.UpdateProfile(c.Context(), userID, &req)
 	if err != nil {
-		if errors.Is(err, service.ErrUserNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(model.ErrorResponse{Error: "user not found"})
-		}
 		slog.Error("update profile failed", "err", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(model.ErrorResponse{Error: "internal server error"})
+		return handleError(c, err, "internal server error")
 	}
 
 	return c.JSON(user)
@@ -75,14 +72,8 @@ func (h *ProfileHandler) ChangePassword(c *fiber.Ctx) error {
 
 	err := h.profileService.ChangePassword(c.Context(), userID, req.CurrentPassword, req.NewPassword)
 	if err != nil {
-		if errors.Is(err, service.ErrInvalidCreds) {
-			return c.Status(fiber.StatusUnauthorized).JSON(model.ErrorResponse{Error: "current password is incorrect"})
-		}
-		if errors.Is(err, service.ErrUserNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(model.ErrorResponse{Error: "user not found"})
-		}
-		slog.Error("change password failed", "err", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(model.ErrorResponse{Error: "internal server error"})
+		slog.Error("change pass failed", "err", err)
+		return handleError(c, err, "internal server error")
 	}
 
 	return c.JSON(fiber.Map{"message": "password changed successfully"})
@@ -108,8 +99,8 @@ func (h *ProfileHandler) GetUploadURL(c *fiber.Ctx) error {
 	objectName := profileObjectName(userID, req.ContentType)
 	uploadURL, publicURL, err := h.storage.GetPresignedUploadURL(c.Context(), objectName, req.ContentType)
 	if err != nil {
-		slog.Error("minio presigned upload failed", "err", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(model.ErrorResponse{Error: "upload url generation failed"})
+		slog.Error("get upload url failed", "err", err)
+		return handleError(c, err, "internal server error")
 	}
 
 	return c.JSON(fiber.Map{"uploadUrl": uploadURL, "publicUrl": publicURL})
