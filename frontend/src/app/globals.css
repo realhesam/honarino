@@ -103,7 +103,7 @@
 
   /* Button's */
   .btn {
-    @apply text-sm flex items-center justify-center gap-1 rounded-xl transition-all sm:text-base;
+    @apply text-sm flex items-center justify-center gap-1 rounded-xl cursor-pointer transition-all sm:text-base;
   }
 
   .btn-primary {

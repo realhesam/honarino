@@ -27,7 +27,7 @@ const links = [
   {
     icon: <PiCirclesFourDuotone />,
     label: "دسته بندی ها",
-    path: "/category",
+    path: "/categories",
   },
   {
     icon: <PiQuestionDuotone />,
