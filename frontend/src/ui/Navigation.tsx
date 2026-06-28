@@ -37,7 +37,7 @@ const links = [
   {
     icon: <PiUsersThreeDuotone />,
     label: "تماس با ما",
-    path: "/support",
+    path: "/contact",
   },
 ];
 
