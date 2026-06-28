@@ -4,7 +4,12 @@ import { usePathname } from "next/navigation";
 import Header from "./Header";
 import Footer from "./Footer";
 
-const limitedPages = ["/auth/signin", "/auth/signup", "/account"];
+const limitedPages = [
+  "/auth/signin",
+  "/auth/signup",
+  "/account",
+  "/upgrade-to-production",
+];
 
 function LayoutCondition({
   children,
