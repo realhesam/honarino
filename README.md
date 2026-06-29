@@ -11,6 +11,14 @@ Project designed for malayer, in this project you can create your own production
 - You can access to other's production and help to you to find the products that you want.
 - You don't need much knowledge to create your vendor account.
 
+## 💫 Why Honarino???
+
+<p align="center" style="display: flex; justify-content: center; gap: 15px;">
+    <img src="./github/feature01.jpg" width="30%" />
+    <img src="./github/feature02.jpg" width="30%" />
+    <img src="./github/feature03.jpg" width="30%" />
+</p>
+
 ## 🖥️ Preview
 
 <p align="center">
