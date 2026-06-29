@@ -1,6 +1,13 @@
 import InputRow from "@/ui/InputRow";
 import LinkButton from "@/ui/LinkButton";
 import Modal from "@/ui/Modal";
+import {
+  HiArchiveBox,
+  HiCube,
+  HiMapPin,
+  HiMiniSquares2X2,
+} from "react-icons/hi2";
+import { PiFactoryFill } from "react-icons/pi";
 
 function submitForm(e: FormDataEvent) {
   e.preventDefault();
@@ -12,21 +19,21 @@ export default function SearchForm() {
     <div>
       <form onSubmit={submitForm}>
         <div className="grid xs:grid-cols-2 gap-2.5">
-          <InputRow label="نام تولیدی">
+          <InputRow label="نام تولیدی" dir="rtl" icon={<PiFactoryFill />}>
             <input
               type="text"
               className="input"
               placeholder="نام تولیدی مورد نظر"
             />
           </InputRow>
-          <InputRow label="نام محصول">
+          <InputRow label="نام محصول" dir="rtl" icon={<HiCube />}>
             <input
               type="text"
               className="input"
               placeholder="نام محصول مورد نظر"
             />
           </InputRow>
-          <InputRow label="دسته بندی">
+          <InputRow label="دسته بندی" dir="rtl" icon={<HiMiniSquares2X2 />}>
             <select className="input">
               <option value="all">جست و جو در همه</option>
               <option value="sofa">مبلمان</option>
@@ -35,7 +42,7 @@ export default function SearchForm() {
               <option value="carpet">فرش و بافتنی</option>
             </select>
           </InputRow>
-          <InputRow label="استان">
+          <InputRow label="استان" dir="rtl" icon={<HiMapPin />}>
             <input
               type="text"
               className="input"

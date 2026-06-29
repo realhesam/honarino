@@ -2,9 +2,11 @@
 
 import { AppError } from "@/lib/core/errors/AppError";
 import { AuthService } from "@/lib/modules/auth/auth.service";
+import InputRow from "@/ui/InputRow";
 import LinkButton from "@/ui/LinkButton";
 import { useNotification } from "@/utils/useNotification";
 import { useState } from "react";
+import { HiEnvelope, HiIdentification, HiKey, HiUser } from "react-icons/hi2";
 
 function Page() {
   const [name, setName] = useState("");
@@ -27,7 +29,7 @@ function Page() {
         email,
         username,
         password,
-        repeat_password
+        repeat_password,
       });
 
       notification.success("اکانت شما با موفقیت ساخته شد اکنون وارد شوید");
@@ -48,45 +50,55 @@ function Page() {
         onSubmit={handleSubmit}
         className="flex flex-col items-center gap-5"
       >
-        <input
-          type="text"
-          placeholder="نام"
-          className="input"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <InputRow dir="rtl" icon={<HiIdentification />}>
+          <input
+            type="text"
+            placeholder="نام و نام خانوادگی"
+            className="input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </InputRow>
 
-        <input
-          type="text"
-          placeholder="نام کاربری"
-          className="input"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+        <InputRow dir="rtl" icon={<HiUser />}>
+          <input
+            type="text"
+            placeholder="نام کاربری"
+            className="input"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </InputRow>
 
-        <input
-          type="password"
-          placeholder="رمزعبور"
-          className="input"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <InputRow dir="rtl" icon={<HiKey />}>
+          <input
+            type="password"
+            placeholder="رمزعبور"
+            className="input"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </InputRow>
 
-        <input
-          type="password"
-          placeholder="تکرار کلمه عبور"
-          className="input"
-          value={repeat_password}
-          onChange={(e) => setRepeatPassword(e.target.value)}
-        />
+        <InputRow dir="rtl" icon={<HiKey />}>
+          <input
+            type="password"
+            placeholder="تکرار کلمه عبور"
+            className="input"
+            value={repeat_password}
+            onChange={(e) => setRepeatPassword(e.target.value)}
+          />
+        </InputRow>
 
-        <input
-          type="text"
-          placeholder="ایمیل"
-          className="input"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <InputRow dir="rtl" icon={<HiEnvelope />}>
+          <input
+            type="text"
+            placeholder="ایمیل"
+            className="input"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </InputRow>
 
         <div className="w-full flex items-center">
           <LinkButton

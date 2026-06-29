@@ -3,7 +3,7 @@
 import InputRow from "@/ui/InputRow";
 import LinkButton from "@/ui/LinkButton";
 import { useState } from "react";
-import type { ChangeEvent, FormEvent, ReactNode } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { HiEnvelope, HiMiniH1, HiUser } from "react-icons/hi2";
 import {
   LuMail,
@@ -95,49 +95,50 @@ export default function ContactPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <InputRow label="نام و نام خانوادگی" htmlFor="name">
-                  <div className="relative flex items-center">
-                    <HiUser className="absolute right-3.5 size-4.5 text-stone-400" />
-                    <input
-                      className={`input pr-10`}
-                      name="name"
-                      id="name"
-                      type="text"
-                      placeholder="نام خود را وارد کنید"
-                      required
-                    />
-                  </div>
+                <InputRow
+                  label="نام و نام خانوادگی"
+                  htmlFor="name"
+                  dir="rtl"
+                  icon={<HiUser />}
+                >
+                  <input
+                    className={`input pr-10`}
+                    name="name"
+                    id="name"
+                    type="text"
+                    placeholder="نام خود را وارد کنید"
+                    required
+                  />
                 </InputRow>
-                <InputRow label="ایمیل" htmlFor="email">
-                  <div className="relative flex items-center">
-                    <HiEnvelope className="absolute left-3.5 size-4.5 text-stone-400 z-10" />
-                    <input
-                      className={`input`}
-                      type="email"
-                      name="email"
-                      id="email"
-                      placeholder="example@domain.com"
-                      dir="ltr"
-                    />
-                  </div>
+                <InputRow label="ایمیل" htmlFor="email" icon={<HiEnvelope />}>
+                  <input
+                    className={`input`}
+                    type="email"
+                    name="email"
+                    id="email"
+                    placeholder="example@domain.com"
+                    dir="ltr"
+                  />
                 </InputRow>
               </div>
 
-              <InputRow label="موضوع" htmlFor="subject">
-                <div className="relative flex items-center">
-                  <HiMiniH1 className="absolute right-3.5 size-4.5 text-stone-400" />
-                  <input
-                    className={`input pr-10`}
-                    name="subject"
-                    id="subject"
-                    type="text"
-                    placeholder="عنوان سوال را بنویسید"
-                    required
-                  />
-                </div>
+              <InputRow
+                label="موضوع"
+                htmlFor="subject"
+                icon={<HiMiniH1 />}
+                dir="rtl"
+              >
+                <input
+                  className={`input pr-10`}
+                  name="subject"
+                  id="subject"
+                  type="text"
+                  placeholder="عنوان سوال را بنویسید"
+                  required
+                />
               </InputRow>
 
-              <InputRow label="پیام">
+              <InputRow label="پیام" dir="rtl">
                 <textarea
                   required
                   rows={5}

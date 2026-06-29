@@ -2,10 +2,12 @@
 
 import { AppError } from "@/lib/core/errors/AppError";
 import { AuthService } from "@/lib/modules/auth/auth.service";
+import InputRow from "@/ui/InputRow";
 import LinkButton from "@/ui/LinkButton";
 import { useNotification } from "@/utils/useNotification";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { HiMiniKey, HiMiniUser } from "react-icons/hi2";
 
 function Page() {
   const [username, setUsername] = useState("");
@@ -30,7 +32,6 @@ function Page() {
       setTimeout(() => {
         router.push("/dashboard");
       }, 100);
-      
     } catch (error) {
       if (error instanceof AppError) {
         notification.error(error.message);
@@ -44,22 +45,29 @@ function Page() {
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="flex flex-col items-center gap-5">
-        <input
-          type="text"
-          placeholder="نام کاربری"
-          className="input"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col items-center gap-5"
+      >
+        <InputRow icon={<HiMiniUser />} dir="rtl">
+          <input
+            type="text"
+            placeholder="نام کاربری"
+            className="input"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </InputRow>
 
-        <input
-          type="password"
-          placeholder="رمزعبور"
-          className="input"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <InputRow icon={<HiMiniKey />} dir="rtl">
+          <input
+            type="password"
+            placeholder="رمزعبور"
+            className="input"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </InputRow>
 
         <div className="w-full flex items-center">
           <LinkButton
