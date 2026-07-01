@@ -46,8 +46,8 @@ const FEATURES: Feature[] = [
   },
   {
     icon: LuShieldCheck,
-    title: "پرداخت امن",
-    description: "هر تراکنش از درگاه‌های معتبر بانکی عبور می‌کند.",
+    title: "تضمین امنیت",
+    description: "امنیت صفحه تولیدی شما توسط تیم هنرینو تامین می شود",
   },
   {
     icon: LuHeadset,
@@ -191,8 +191,8 @@ export default function AboutPage() {
       <Features />
       <Process />
       <Testimonials />
-      <Faq />
       <ClosingCta />
+      <Faq />
     </main>
   );
 }

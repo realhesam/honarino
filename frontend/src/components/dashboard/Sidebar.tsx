@@ -36,7 +36,7 @@ export default function Sidebar({ links }: { links: NavLink[] }) {
     <>
       <button
         onClick={() => setIsSidebarOpen(true)}
-        className={`fixed top-4 right-4 z-40 p-2.5 rounded-xl border transition-all lg:hidden shrink-0 text-stone-600 active:scale-95 bg-white border-transparent`}
+        className={`fixed top-4 right-4 z-40 p-1.5 rounded-xl border transition-all lg:hidden shrink-0 text-stone-600 active:scale-95 bg-white border-transparent`}
         aria-label="باز کردن منو"
       >
         <HiOutlineMenu className="size-6" />

@@ -1,16 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { HiLockClosed, HiEye, HiEyeSlash, HiXMark, HiCheck, HiArrowRight, HiShieldCheck } from "react-icons/hi2";
+import {
+  HiLockClosed,
+  HiEye,
+  HiEyeSlash,
+  HiXMark,
+  HiCheck,
+  HiArrowRight,
+  HiShieldCheck,
+} from "react-icons/hi2";
 import { useUser } from "@/context/UserContext";
 import { useNotification } from "@/utils/useNotification";
+import { useOutsideClick } from "@/utils/useOutsideClick";
+import Overlay from "@/ui/Overlay";
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
+export default function ChangePasswordModal({
+  isOpen,
+  onClose,
+}: ChangePasswordModalProps) {
+  const { ref } = useOutsideClick(onClose);
   const { changePassword } = useUser();
   const notification = useNotification();
 
@@ -29,14 +43,17 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
 
   const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentPassword) return notification.error("رمز عبور فعلی الزامی است.");
+    if (!currentPassword)
+      return notification.error("رمز عبور فعلی الزامی است.");
     setStep(2);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword !== confirmPassword) return notification.error("رمزهای جدید همخوانی ندارند.");
-    if (newPassword.length < 8) return notification.error("رمز جدید باید حداقل ۸ کاراکتر باشد.");
+    if (newPassword !== confirmPassword)
+      return notification.error("رمزهای جدید همخوانی ندارند.");
+    if (newPassword.length < 8)
+      return notification.error("رمز جدید باید حداقل ۸ کاراکتر باشد.");
 
     setIsSubmitting(true);
     try {
@@ -65,22 +82,27 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
     "hover:border-stone-300 hover:bg-stone-50 transition-all duration-200 text-left tracking-widest font-mono";
 
   return (
-    <div dir="rtl" className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-stone-900/25 backdrop-blur-md p-0 sm:p-4 transition-all duration-300">
-      
-      <div className="w-full sm:max-w-[380px] bg-white rounded-t-3xl sm:rounded-2xl border border-stone-200/50 shadow-2xl p-6 pb-8 sm:pb-6 space-y-5 transform transition-all duration-300 animate-slide-up sm:animate-scale-in">
-        
+    <>
+      <div
+        ref={ref}
+        className="absolute inset-0 m-auto h-fit z-50 w-full sm:max-w-[380px] bg-white rounded-t-3xl sm:rounded-2xl border border-stone-200/50 shadow-2xl p-6 pb-8 sm:pb-6 space-y-5 transform transition-all duration-300 animate-slide-up sm:animate-scale-in"
+      >
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100/60 shrink-0">
               <HiLockClosed className="size-4.5" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-stone-800">تغییر کلمه عبور</h4>
-              <p className="text-[10px] text-stone-400 mt-0.5">امنیت حساب کاربری</p>
+              <h4 className="text-xs font-bold text-stone-800">
+                تغییر کلمه عبور
+              </h4>
+              <p className="text-[10px] text-stone-400 mt-0.5">
+                امنیت حساب کاربری
+              </p>
             </div>
           </div>
-          
-          <button 
+
+          <button
             onClick={handleCloseModal}
             className="p-1.5 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-50 transition-all border border-transparent hover:border-stone-100"
           >
@@ -89,17 +111,22 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
         </div>
 
         <div className="relative h-[4px] w-full bg-stone-100 rounded-full overflow-hidden">
-          <div 
-            className="absolute top-0 right-0 h-full bg-gradient-to-l from-emerald-400 to-emerald-500 rounded-full transition-all duration-500 ease-out shadow-[0_0_8px_rgba(16,185,129,0.5)]" 
-            style={{ width: step === 1 ? '50%' : '100%' }}
+          <div
+            className="absolute top-0 right-0 h-full bg-linear-to-l from-emerald-400 to-emerald-500 rounded-full transition-all duration-500 ease-out shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+            style={{ width: step === 1 ? "50%" : "100%" }}
           />
         </div>
 
         <div className="overflow-hidden">
           {step === 1 ? (
-            <form onSubmit={handleNextStep} className="space-y-4 animate-fade-in">
+            <form
+              onSubmit={handleNextStep}
+              className="space-y-4 animate-fade-in"
+            >
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-stone-500 mr-0.5">رمز عبور فعلی</label>
+                <label className="text-[11px] font-bold text-stone-500 mr-0.5">
+                  رمز عبور فعلی
+                </label>
                 <div className="relative flex items-center">
                   <HiLockClosed className="absolute right-3.5 size-4.5 text-stone-400 z-10" />
                   <input
@@ -115,7 +142,11 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                     onClick={() => setShowCurrent(!showCurrent)}
                     className="absolute left-3.5 text-stone-400 hover:text-emerald-600 transition-colors z-10"
                   >
-                    {showCurrent ? <HiEyeSlash className="size-4.5" /> : <HiEye className="size-4.5" />}
+                    {showCurrent ? (
+                      <HiEyeSlash className="size-4.5" />
+                    ) : (
+                      <HiEye className="size-4.5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -131,7 +162,9 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-stone-500 mr-0.5">رمز عبور جدید</label>
+                <label className="text-[11px] font-bold text-stone-500 mr-0.5">
+                  رمز عبور جدید
+                </label>
                 <div className="relative flex items-center">
                   <HiLockClosed className="absolute right-3.5 size-4.5 text-stone-400 z-10" />
                   <input
@@ -147,13 +180,19 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                     onClick={() => setShowNew(!showNew)}
                     className="absolute left-3.5 text-stone-400 hover:text-emerald-600 transition-colors z-10"
                   >
-                    {showNew ? <HiEyeSlash className="size-4.5" /> : <HiEye className="size-4.5" />}
+                    {showNew ? (
+                      <HiEyeSlash className="size-4.5" />
+                    ) : (
+                      <HiEye className="size-4.5" />
+                    )}
                   </button>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-stone-500 mr-0.5">تکرار رمز عبور جدید</label>
+                <label className="text-[11px] font-bold text-stone-500 mr-0.5">
+                  تکرار رمز عبور جدید
+                </label>
                 <div className="relative flex items-center">
                   <HiShieldCheck className="absolute right-3.5 size-4.5 text-stone-400 z-10" />
                   <input
@@ -169,7 +208,11 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                     onClick={() => setShowConfirm(!showConfirm)}
                     className="absolute left-3.5 text-stone-400 hover:text-emerald-600 transition-colors z-10"
                   >
-                    {showConfirm ? <HiEyeSlash className="size-4.5" /> : <HiEye className="size-4.5" />}
+                    {showConfirm ? (
+                      <HiEyeSlash className="size-4.5" />
+                    ) : (
+                      <HiEye className="size-4.5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -183,13 +226,15 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                 >
                   بازگشت
                 </button>
-                
+
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="flex-[2] bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-bold text-xs py-3 rounded-xl shadow-lg shadow-emerald-500/10 flex items-center justify-center gap-1.5 disabled:opacity-70 transition-all duration-200"
                 >
-                  {isSubmitting ? "در حال ثبت..." : (
+                  {isSubmitting ? (
+                    "در حال ثبت..."
+                  ) : (
                     <>
                       <span>ذخیره تغییرات</span>
                       <HiCheck className="size-4" />
@@ -200,8 +245,8 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
             </form>
           )}
         </div>
-
       </div>
-    </div>
+      <Overlay />
+    </>
   );
 }
