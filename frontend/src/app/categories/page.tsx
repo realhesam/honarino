@@ -6,6 +6,7 @@ import React from "react";
 import { HiChevronLeft } from "react-icons/hi2";
 import {
   PiArmchairFill,
+  PiCoatHangerBold,
   PiDotsThreeCircleDuotone,
   PiHandHeartFill,
   PiPottedPlantDuotone,
@@ -17,6 +18,7 @@ type CategoryType = {
   icon: React.ReactElement;
   title: string;
   link: string;
+  subLinks: string[];
   productCount: number;
 };
 
@@ -31,114 +33,53 @@ const categoryList: CategoryType[] = [
   {
     icon: <PiArmchairFill />,
     title: "مبلمان و صندلی",
-    link: "sofa",
+    link: "/sofa",
+    subLinks: ["سلطنتی", "مینیمال", "راحتی", "گوشه گرد", "صندلی تکی"],
     productCount: 1500,
   },
   {
     icon: <PiYarnDuotone />,
     title: "فرش و بافتنی",
-    link: "carpet-and-knitting",
+    link: "/carpet-and-knitting",
+    subLinks: ["فرش سلطنتی", "فرش مدرن", "فرش دستبافت", "فرش گرد"],
     productCount: 3000,
   },
   {
     icon: <PiPottedPlantDuotone />,
     title: "سفال و ظروف",
-    link: "pottery",
+    link: "/pottery",
+    subLinks: ["پارچ", "لیوان", "بشقاب", "کوزه"],
     productCount: 200,
   },
   {
     icon: <PiHandHeartFill />,
     title: "صنایع دستی",
-    link: "handmake",
+    link: "/handmake",
+    subLinks: ["تابلو", "کیف", "گلیم", "مجسمه"],
     productCount: 500,
   },
   {
     icon: <PiTreeFill />,
     title: "صنایع چوبی",
-    link: "woodmake",
+    link: "/woodmake",
+    subLinks: ["میز", "صندلی چوبی", "دکوری"],
     productCount: 683,
+  },
+  {
+    icon: <PiCoatHangerBold />,
+    title: "لباس و پوشاک",
+    link: "/clothes",
+    subLinks: ["شلوار", "کفش", "کیف", "لباس"],
+    productCount: 1632,
   },
   {
     icon: <PiDotsThreeCircleDuotone />,
     title: "سایر محصولات",
-    link: "others",
+    link: "/others",
+    subLinks: ["لوازم برقی", "گل و گیاه", "سوغاتی", "کیف و کفش"],
     productCount: 1632,
   },
 ];
-
-const sofaCategory: CategoryItemType[] = [
-  {
-    title: "مینیمال و راحتی",
-    image: "/images/category-sofa.jpg",
-    link: "minimal",
-    productCount: 120,
-  },
-  {
-    title: "سلطنتی",
-    image: "/images/category-sofa.jpg",
-    link: "royal",
-    productCount: 123,
-  },
-  {
-    title: "تخت خواب شو",
-    image: "/images/category-sofa.jpg",
-    link: "royal",
-    productCount: 140,
-  },
-  {
-    title: "گوشه گرد",
-    image: "/images/category-sofa.jpg",
-    link: "royal",
-    productCount: 102,
-  },
-  {
-    title: "چسترفیلد",
-    image: "/images/category-sofa.jpg",
-    link: "royal",
-    productCount: 79,
-  },
-  {
-    title: "قطعه ای",
-    image: "/images/category-sofa.jpg",
-    link: "royal",
-    productCount: 178,
-  },
-];
-
-const pottery: CategoryItemType[] = [];
-
-function CategoryItem({
-  image,
-  title,
-  productCount,
-  link,
-}: Readonly<CategoryItemType>) {
-  return (
-    <div className="bg-white rounded-xl shadow">
-      <div className="relative w-full h-40 xs:size-50">
-        <Image
-          src={image}
-          alt="sofas-category-image"
-          className="rounded-t-xl"
-          fill
-        />
-      </div>
-      <div className="p-2.5">
-        <h3 className="text-lg font-medium xs:text-2xl line-clamp-1">
-          {title}
-        </h3>
-        <div className="flex items-center justify-between pt-2.5">
-          <span className="text-xs text-stone-600 xs:text-sm">
-            {productCount} محصول
-          </span>
-          <LinkButton href={link} size="small" customClass="p-0.5 *:size-5">
-            <HiChevronLeft />
-          </LinkButton>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function Categories() {
   return (
@@ -149,78 +90,39 @@ export default function Categories() {
       >
         <div className="grid grid-cols-2 xs:flex flex-wrap justify-center gap-5">
           {categoryList.map((category, i) => (
-            <div className="p-4 rounded-xl bg-white xs:w-50 shadow" key={i}>
+            <div
+              className="p-4 flex flex-col rounded-xl bg-white xs:w-70 shadow"
+              key={i}
+            >
               <div className="w-fit mb-2 *:size-10 bg-primary/10 text-primary rounded-full p-2">
                 {category.icon}
               </div>
               <h3 className="text-lg font-medium xs:text-2xl line-clamp-1">
                 {category.title}
               </h3>
-              <div className="flex items-center justify-between pt-2.5">
+              <div className="flex gap-1 items-center flex-wrap mt-2.5">
+                {category.subLinks.map((subLink) => (
+                  <span
+                    key={subLink}
+                    className="bg-stone-100 border border-stone-200 text-stone-600 p-1 rounded-sm text-xs"
+                  >
+                    {subLink}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-auto flex items-center justify-between pt-2.5">
                 <span className="text-xs text-stone-600 xs:text-sm">
                   {category.productCount} محصول
                 </span>
-                <LinkButton size="small" customClass="p-0.5 *:size-5">
+                <LinkButton
+                  href={`/categories/${category.link}`}
+                  size="small"
+                  customClass="p-0.5 *:size-5"
+                >
                   <HiChevronLeft />
                 </LinkButton>
               </div>
             </div>
-          ))}
-        </div>
-      </SectionCenter>
-
-      <SectionCenter title="دسته بندی مبلمان" subTitle={false}>
-        <div className="grid grid-cols-2 xs:flex flex-wrap justify-center gap-5">
-          {sofaCategory.map((sofa, i) => (
-            <CategoryItem
-              title={sofa.title}
-              image={sofa.image}
-              productCount={sofa.productCount}
-              link={sofa.link}
-              key={i}
-            />
-          ))}
-        </div>
-      </SectionCenter>
-
-      <SectionCenter title="دسته بندی فرش و بافتنی" subTitle={false}>
-        <div className="grid grid-cols-2 xs:flex flex-wrap justify-center gap-5">
-          {sofaCategory.map((sofa, i) => (
-            <CategoryItem
-              title={sofa.title}
-              image="/images/category-carpet.jpg"
-              productCount={sofa.productCount}
-              link={sofa.link}
-              key={i}
-            />
-          ))}
-        </div>
-      </SectionCenter>
-
-      <SectionCenter title="دسته بندی سفال و ظروف" subTitle={false}>
-        <div className="grid grid-cols-2 xs:flex flex-wrap justify-center gap-5">
-          {sofaCategory.map((sofa, i) => (
-            <CategoryItem
-              title={sofa.title}
-              image="/images/category-pottery.jpg"
-              productCount={sofa.productCount}
-              link={sofa.link}
-              key={i}
-            />
-          ))}
-        </div>
-      </SectionCenter>
-
-      <SectionCenter title="دسته بندی صنایع چوبی" subTitle={false}>
-        <div className="grid grid-cols-2 xs:flex flex-wrap justify-center gap-5">
-          {sofaCategory.map((sofa, i) => (
-            <CategoryItem
-              title={sofa.title}
-              image="/images/category-table.jpg"
-              productCount={sofa.productCount}
-              link={sofa.link}
-              key={i}
-            />
           ))}
         </div>
       </SectionCenter>
