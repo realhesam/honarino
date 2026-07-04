@@ -4,10 +4,12 @@ import (
 	"backend/internal/cache"
 	"backend/internal/model"
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -32,4 +34,9 @@ func InvalidateUserCache(ctx context.Context, rdb *cache.Redis, userID string) {
 	if err := rdb.Del(ctx, cache.KeyUserProfile(userID)); err != nil {
 		slog.Warn("redis del profile error", "err", err, "userID", userID)
 	}
+}
+
+func isUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505"
 }

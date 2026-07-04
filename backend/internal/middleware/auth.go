@@ -3,10 +3,11 @@ package middleware
 import (
 	"strings"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 	"backend/internal/cache"
 	"backend/internal/model"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func JWTProtected(secret string, rdb *cache.Redis) fiber.Handler {
@@ -57,7 +58,15 @@ func JWTProtected(secret string, rdb *cache.Redis) fiber.Handler {
 			}
 		}
 
-		c.Locals("userID", claims["sub"].(string))
+		sub, ok := claims["sub"].(string)
+		if !ok || strings.TrimSpace(sub) == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(model.ErrorResponse{Error: "invalid token claims"})
+		}
+
+		c.Locals("userID", sub)
+		if role, ok := claims["role"].(string); ok && strings.TrimSpace(role) != "" {
+			c.Locals("role", role)
+		}
 		c.Locals("tokenStr", tokenStr)
 
 		return c.Next()

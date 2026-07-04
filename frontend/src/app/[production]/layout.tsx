@@ -2,27 +2,17 @@ import ProductionLayoutCondition from "@/components/production/ProductionLayoutC
 import LoadingSpinner from "@/layout/LoadingSpinner";
 
 import { Suspense } from "react";
-// import { usePathname } from "next/navigation";
+
 import {
   PiChatCenteredDotsDuotone,
-  PiGearDuotone,
   PiHouseLineDuotone,
   PiQuestionDuotone,
   PiShoppingCartDuotone,
 } from "react-icons/pi";
 
 async function Layout({ children, params }: any) {
-  // const pathname = usePathname();
-  // const isDashboard = pathname?.includes("/dashboard");
-
-  // If it's the dashboard, return children without production header
-  // if (isDashboard) {
-  //   return <>{children}</>;
-  // }
-
   const { production } = params;
 
-  // fake data...
   const pages = [
     {
       label: "صفحه اصلی",
@@ -43,11 +33,6 @@ async function Layout({ children, params }: any) {
       label: "درباره تولیدی",
       href: `/${production}/about`,
       icon: <PiQuestionDuotone />,
-    },
-    {
-      label: "داشبورد",
-      href: `/${production}/dashboard`,
-      icon: <PiGearDuotone />,
     },
   ];
 

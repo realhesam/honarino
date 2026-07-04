@@ -1,22 +1,31 @@
 "use client";
 
-import { useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   HiOutlineMapPin,
   HiOutlineCheck,
   HiOutlinePencil,
   HiOutlineXMark,
   HiOutlineChevronLeft,
+  HiOutlineCamera,
+  HiOutlineTrash,
+  HiOutlineArrowUpTray,
 } from "react-icons/hi2";
 import { FaTelegram, FaWhatsapp } from "react-icons/fa";
 import { MdOutlineChatBubble } from "react-icons/md";
 import { GiPlantRoots } from "react-icons/gi";
 import { HiOutlineGlobeAlt } from "react-icons/hi";
 import LinkButton from "@/ui/LinkButton";
-
-/* ----------------------------------------------------------------------- *
- *  Types
- * ----------------------------------------------------------------------- */
+import { AppError } from "@/lib/core/errors/AppError";
+import { ApiError } from "@/lib/core/errors/ApiError";
+import { ProductionService } from "@/lib/modules/production/production.service";
+import type { CreateProductionRequest } from "@/lib/modules/production/production.dto";
+import type { ImageType } from "@/lib/modules/production/production.types";
+import {
+  uploadProductionImage,
+  validateProductionImageFile,
+} from "@/utils/useProductionImageUpload";
+import { useNotification } from "@/utils/useNotification";
 
 type StepKey = "identity" | "categories" | "production" | "online" | "review";
 
@@ -27,6 +36,7 @@ interface StepDef {
 }
 
 interface FormState {
+  shopId: string;
   shopName: string;
   shopDescription: string;
   categories: string[];
@@ -41,6 +51,24 @@ interface FormState {
 }
 
 type FormErrors = Partial<Record<keyof FormState, string>>;
+
+type ImageFieldKey = ImageType;
+
+interface ImageFieldState {
+  file: File | null;
+  preview: string | null;
+}
+
+type ImageFieldsState = Record<ImageFieldKey, ImageFieldState>;
+
+type ImageFieldErrors = Partial<Record<ImageFieldKey, string>>;
+
+interface ImageFieldDef {
+  key: ImageFieldKey;
+  label: string;
+  hint: string;
+  boxClass: string;
+}
 
 type RailMarkerState = "upcoming" | "current" | "done";
 
@@ -87,7 +115,21 @@ interface MobileProgressProps {
 interface StepIdentityProps {
   form: FormState;
   errors: FormErrors;
+  imageFields: ImageFieldsState;
+  imageErrors: ImageFieldErrors;
   update: (field: keyof FormState, value: string) => void;
+  onImageSelect: (key: ImageFieldKey, file: File) => void;
+  onImageRemove: (key: ImageFieldKey) => void;
+  uid: string;
+}
+
+interface ImageUploadBoxProps {
+  def: ImageFieldDef;
+  state: ImageFieldState;
+  error?: string;
+  disabled?: boolean;
+  onSelect: (file: File) => void;
+  onRemove: () => void;
   uid: string;
 }
 
@@ -118,6 +160,7 @@ interface StepOnlineProps {
 
 interface StepReviewProps {
   form: FormState;
+  imageFields: ImageFieldsState;
   onEditStep: (idx: number) => void;
 }
 
@@ -125,10 +168,6 @@ interface SuccessScreenProps {
   form: FormState;
   onEdit: () => void;
 }
-
-/* ----------------------------------------------------------------------- *
- *  Constants
- * ----------------------------------------------------------------------- */
 
 const STEP_DEFS: StepDef[] = [
   {
@@ -171,9 +210,37 @@ const SUGGESTED_CATEGORIES: string[] = [
 
 const MAX_CATEGORIES = 4;
 
+const IMAGE_FIELD_DEFS: ImageFieldDef[] = [
+  {
+    key: "logo",
+    label: "لوگو فروشگاه",
+    hint: "JPG، PNG، GIF یا WebP — حداکثر ۵ مگابایت",
+    boxClass: "aspect-square w-32",
+  },
+  {
+    key: "banner",
+    label: "بنر فروشگاه",
+    hint: "تصویر عریض ۱۶:۹ — حداکثر ۵ مگابایت",
+    boxClass: "aspect-[16/9] w-full max-w-sm",
+  },
+  {
+    key: "cover",
+    label: "کاور فروشگاه",
+    hint: "تصویر کاور — حداکثر ۵ مگابایت",
+    boxClass: "aspect-[16/9] w-full max-w-sm",
+  },
+];
+
+const INITIAL_IMAGE_FIELDS: ImageFieldsState = {
+  logo: { file: null, preview: null },
+  banner: { file: null, preview: null },
+  cover: { file: null, preview: null },
+};
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\-\s]{7,16}$/;
 const URL_RE = /^(https?:\/\/)?([\w-]+\.)+[a-z]{2,}([/?#].*)?$/i;
+const SHOP_ID_RE = /^[a-z0-9](?:[a-z0-9-]{1,48}[a-z0-9])?$/;
 
 const SOCIAL_FIELDS: SocialField[] = [
   {
@@ -203,6 +270,7 @@ const SOCIAL_FIELDS: SocialField[] = [
 ];
 
 const INITIAL_FORM: FormState = {
+  shopId: "",
   shopName: "",
   shopDescription: "",
   categories: [],
@@ -215,10 +283,6 @@ const INITIAL_FORM: FormState = {
   whatsapp: "",
   website: "",
 };
-
-/* ----------------------------------------------------------------------- *
- *  Shared Tailwind class strings
- * ----------------------------------------------------------------------- */
 
 const FOCUS_RING =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 focus-visible:rounded-md";
@@ -244,17 +308,27 @@ const BTN_GHOST =
   "bg-transparent text-gray-500 border-gray-200 hover:border-emerald-500 hover:text-emerald-800 " +
   "disabled:hover:border-gray-200 disabled:hover:text-gray-500";
 
-/* ----------------------------------------------------------------------- *
- *  Helpers
- * ----------------------------------------------------------------------- */
 
 function toFa(n: number): string {
   return n.toLocaleString("fa-IR");
 }
 
-/* ----------------------------------------------------------------------- *
- *  Reusable sub-components
- * ----------------------------------------------------------------------- */
+function mapFormToRequest(form: FormState): CreateProductionRequest {
+  return {
+    shop_id: form.shopId.trim(),
+    shop_name: form.shopName.trim(),
+    shop_description: form.shopDescription.trim(),
+    categories: form.categories,
+    production_address: form.productionAddress.trim(),
+    production_phone: form.productionPhone.trim(),
+    production_email: form.productionEmail.trim(),
+    telegram: form.telegram.trim() || undefined,
+    rubika: form.rubika.trim() || undefined,
+    eitaa: form.eitaa.trim() || undefined,
+    whatsapp: form.whatsapp.trim() || undefined,
+    website: form.website.trim() || undefined,
+  };
+}
 
 function Field({ label, hint, error, required, children, id }: FieldProps) {
   return (
@@ -308,9 +382,105 @@ function TextArea({ id, error, ...rest }: TextAreaProps) {
   );
 }
 
-/* ----------------------------------------------------------------------- *
- *  Rail (sidebar progress navigator)
- * ----------------------------------------------------------------------- */
+function ImageUploadBox({
+  def,
+  state,
+  error,
+  disabled,
+  onSelect,
+  onRemove,
+  uid,
+}: ImageUploadBoxProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const inputId = `${uid}-image-${def.key}`;
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) onSelect(file);
+    e.target.value = "";
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-baseline mb-[7px]">
+        <label
+          htmlFor={inputId}
+          className="text-[13.5px] font-bold text-gray-900"
+        >
+          {def.label}
+          <span className="text-gray-400 font-normal text-[11.5px] ms-1.5">
+            اختیاری
+          </span>
+        </label>
+        <span className="font-mono text-[11px] text-gray-400">{def.hint}</span>
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+        <div
+          onClick={() => !disabled && inputRef.current?.click()}
+          className={`group relative rounded-2xl overflow-hidden border-2 border-dashed bg-gray-50 flex items-center justify-center transition-all duration-200 ${def.boxClass} ${
+            disabled
+              ? "border-gray-200 cursor-not-allowed opacity-60"
+              : error
+                ? "border-red-400 cursor-pointer hover:border-red-500"
+                : "border-gray-200 cursor-pointer hover:border-emerald-500"
+          }`}
+        >
+          <input
+            ref={inputRef}
+            id={inputId}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            className="hidden"
+            onChange={handleChange}
+            disabled={disabled}
+          />
+
+          {state.preview ? (
+            <img
+              src={state.preview}
+              alt={def.label}
+              className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="flex flex-col items-center text-gray-400 gap-1.5 px-4 py-6 select-none">
+              <HiOutlineCamera
+                size={28}
+                className="text-gray-300 group-hover:text-emerald-600 transition-colors"
+              />
+              <span className="text-[11px] font-medium text-center leading-relaxed">
+                انتخاب تصویر
+              </span>
+            </div>
+          )}
+
+          {!disabled && (
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+              <HiOutlineCamera size={24} className="text-white" />
+            </div>
+          )}
+        </div>
+
+        {state.preview && !disabled && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className={`inline-flex items-center gap-1.5 text-[12px] font-medium text-red-500 hover:text-red-600 bg-red-50 px-3 py-2 rounded-xl border border-red-100 transition-colors ${FOCUS_RING}`}
+          >
+            <HiOutlineTrash size={14} />
+            حذف تصویر
+          </button>
+        )}
+      </div>
+
+      {error && (
+        <p className="mt-1.5 mb-0 text-[12px] text-red-500" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
 
 const RAIL_MARKER_STATE: Record<RailMarkerState, string> = {
   upcoming: "border-gray-200 text-gray-400 bg-white",
@@ -386,8 +556,6 @@ function Rail({ steps, current, maxReached, onSelect }: RailProps) {
   );
 }
 
-// Mobile responsive
-
 function MobileProgress({
   current,
   total,
@@ -416,14 +584,59 @@ function MobileProgress({
   );
 }
 
-// Step 1
-
-function StepIdentity({ form, errors, update, uid }: StepIdentityProps) {
+function StepIdentity({
+  form,
+  errors,
+  imageFields,
+  imageErrors,
+  update,
+  onImageSelect,
+  onImageRemove,
+  uid,
+}: StepIdentityProps) {
+  const shopIdFieldId = `${uid}-shop-id`;
   const nameId = `${uid}-shop-name`;
   const descId = `${uid}-shop-desc`;
 
   return (
     <div className="flex flex-col gap-5">
+      <Field
+        id={shopIdFieldId}
+        label="شناسه فروشگاه (آدرس صفحه)"
+        required
+        error={errors.shopId}
+        hint="۳ تا ۵۰ کاراکتر"
+      >
+        <div
+          className={`${ICON_INPUT_BASE} ${errors.shopId ? "border-red-400" : ""}`}
+        >
+          <span className="text-[12px] text-gray-400 flex-none font-mono">
+            /
+          </span>
+          <input
+            id={shopIdFieldId}
+            value={form.shopId}
+            onChange={(e) =>
+              update("shopId", e.target.value.toLowerCase().replace(/\s/g, "-"))
+            }
+            placeholder="parche-saadat"
+            maxLength={50}
+            className="flex-1 bg-transparent border-none outline-none py-[11px] text-[14px] text-gray-900 font-mono"
+            dir="ltr"
+          />
+        </div>
+        {errors.shopId && (
+          <p className="mt-1.5 text-[12px] text-red-500" role="alert">
+            {errors.shopId}
+          </p>
+        )}
+        {form.shopId && !errors.shopId && (
+          <p className="mt-1.5 text-[11.5px] text-gray-400 font-mono" dir="ltr">
+            آدرس صفحه: /{form.shopId}
+          </p>
+        )}
+      </Field>
+
       <Field id={nameId} label="نام فروشگاه" required error={errors.shopName}>
         <TextInput
           id={nameId}
@@ -451,11 +664,28 @@ function StepIdentity({ form, errors, update, uid }: StepIdentityProps) {
           error={errors.shopDescription}
         />
       </Field>
+
+      <div className="pt-2 border-t border-gray-100">
+        <p className="text-[13px] font-bold text-gray-800 mb-4">
+          تصاویر فروشگاه
+        </p>
+        <div className="flex flex-col gap-5">
+          {IMAGE_FIELD_DEFS.map((def) => (
+            <ImageUploadBox
+              key={def.key}
+              def={def}
+              state={imageFields[def.key]}
+              error={imageErrors[def.key]}
+              onSelect={(file) => onImageSelect(def.key, file)}
+              onRemove={() => onImageRemove(def.key)}
+              uid={uid}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
-
-// Step 2
 
 function StepCategories({
   form,
@@ -545,8 +775,6 @@ function StepCategories({
   );
 }
 
-// Step 3
-
 function StepProduction({ form, errors, update, uid }: StepProductionProps) {
   const addrId = `${uid}-prod-addr`;
   const phoneId = `${uid}-prod-phone`;
@@ -616,8 +844,6 @@ function StepProduction({ form, errors, update, uid }: StepProductionProps) {
   );
 }
 
-// Step 4
-
 function StepOnline({ form, errors, update, uid }: StepOnlineProps) {
   const websiteId = `${uid}-website`;
 
@@ -667,8 +893,6 @@ function StepOnline({ form, errors, update, uid }: StepOnlineProps) {
   );
 }
 
-// Step 5
-
 function ReviewRow({
   label,
   value,
@@ -700,7 +924,11 @@ function ReviewRow({
   );
 }
 
-function StepReview({ form, onEditStep }: StepReviewProps) {
+function StepReview({ form, imageFields, onEditStep }: StepReviewProps) {
+  const uploadedImages = IMAGE_FIELD_DEFS.filter(
+    (def) => imageFields[def.key].preview,
+  );
+
   return (
     <div className="flex flex-col gap-4">
       <section>
@@ -708,6 +936,12 @@ function StepReview({ form, onEditStep }: StepReviewProps) {
           هویت فروشگاه
         </h3>
         <div className="bg-gray-50 rounded-xl px-4">
+          <ReviewRow
+            label="شناسه"
+            value={form.shopId ? `/${form.shopId}` : undefined}
+            stepIdx={0}
+            onEdit={onEditStep}
+          />
           <ReviewRow
             label="نام"
             value={form.shopName}
@@ -720,6 +954,40 @@ function StepReview({ form, onEditStep }: StepReviewProps) {
             stepIdx={0}
             onEdit={onEditStep}
           />
+          {uploadedImages.length > 0 && (
+            <div className="flex justify-between items-start gap-3 py-3 border-b border-gray-100">
+              <span className="text-[12.5px] text-gray-400 flex-none w-28">
+                تصاویر
+              </span>
+              <div className="flex flex-wrap gap-2 flex-1">
+                {uploadedImages.map((def) => (
+                  <div
+                    key={def.key}
+                    className="flex flex-col items-center gap-1"
+                  >
+                    <img
+                      src={imageFields[def.key].preview!}
+                      alt={def.label}
+                      className={`rounded-lg object-cover border border-gray-200 ${
+                        def.key === "logo" ? "size-14" : "w-24 h-14"
+                      }`}
+                    />
+                    <span className="text-[10px] text-gray-500">
+                      {def.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => onEditStep(0)}
+                className={`text-gray-400 hover:text-emerald-600 transition-colors ${FOCUS_RING}`}
+                aria-label="ویرایش تصاویر"
+              >
+                <HiOutlinePencil size={15} />
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -806,10 +1074,6 @@ function StepReview({ form, onEditStep }: StepReviewProps) {
   );
 }
 
-/* ----------------------------------------------------------------------- *
- *  Success Screen
- * ----------------------------------------------------------------------- */
-
 function SuccessScreen({ form, onEdit }: SuccessScreenProps) {
   return (
     <div className="max-w-[480px] mx-auto text-center py-16 flex flex-col items-center gap-5">
@@ -835,14 +1099,16 @@ function SuccessScreen({ form, onEdit }: SuccessScreenProps) {
   );
 }
 
-/* ----------------------------------------------------------------------- *
- *  Validation
- * ----------------------------------------------------------------------- */
-
 function validateStep(idx: number, form: FormState): FormErrors {
   const errors: FormErrors = {};
 
   if (idx === 0) {
+    if (!form.shopId.trim()) errors.shopId = "شناسه فروشگاه را وارد کنید.";
+    else if (form.shopId.trim().length < 3)
+      errors.shopId = "شناسه فروشگاه خیلی کوتاه است.";
+    else if (!SHOP_ID_RE.test(form.shopId.trim()))
+      errors.shopId = "شناسه فقط شامل حروف انگلیسی کوچک، اعداد و خط تیره باشد.";
+
     if (!form.shopName.trim()) errors.shopName = "نام فروشگاه را وارد کنید.";
     else if (form.shopName.trim().length < 2)
       errors.shopName = "نام فروشگاه خیلی کوتاه است.";
@@ -884,19 +1150,49 @@ function validateStep(idx: number, form: FormState): FormErrors {
   return errors;
 }
 
-/* ----------------------------------------------------------------------- *
- *  Main component
- * ----------------------------------------------------------------------- */
+export interface UpgradeProductionFormProps {
+  variant?: "page" | "modal";
+  onSuccess?: (shopName: string) => void;
+  onCancel?: () => void;
+  onBusyChange?: (busy: boolean) => void;
+}
 
-export default function UpgradeProductionForm() {
+export default function UpgradeProductionForm({
+  variant = "page",
+  onSuccess,
+  onCancel,
+  onBusyChange,
+}: UpgradeProductionFormProps = {}) {
+  const isModal = variant === "modal";
+  const notification = useNotification();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [imageFields, setImageFields] =
+    useState<ImageFieldsState>(INITIAL_IMAGE_FIELDS);
+  const [imageErrors, setImageErrors] = useState<ImageFieldErrors>({});
   const [stepIndex, setStepIndex] = useState(0);
   const [maxReached, setMaxReached] = useState(0);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [uploadLabel, setUploadLabel] = useState<string | null>(null);
+
   const [tagDraft, setTagDraft] = useState("");
   const formTopRef = useRef<HTMLDivElement>(null);
+  const imageFieldsRef = useRef(imageFields);
   const uid = useId();
+
+  imageFieldsRef.current = imageFields;
+
+  useEffect(() => {
+    return () => {
+      Object.values(imageFieldsRef.current).forEach((field) => {
+        if (field.preview?.startsWith("blob:")) {
+          URL.revokeObjectURL(field.preview);
+        }
+      });
+    };
+  }, []);
 
   const totalSteps = STEP_DEFS.length;
   const step = STEP_DEFS[stepIndex];
@@ -904,6 +1200,7 @@ export default function UpgradeProductionForm() {
   function update(field: keyof FormState, value: string | string[]) {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
+    if (field === "categories") setSubmitError(null);
   }
 
   function addCategory(raw: string) {
@@ -929,6 +1226,37 @@ export default function UpgradeProductionForm() {
       "categories",
       form.categories.filter((c) => c !== value),
     );
+  }
+
+  function handleImageSelect(key: ImageFieldKey, file: File) {
+    const validationError = validateProductionImageFile(file);
+    if (validationError) {
+      setImageErrors((prev) => ({ ...prev, [key]: validationError }));
+      return;
+    }
+
+    setImageFields((prev) => {
+      const oldPreview = prev[key].preview;
+      if (oldPreview?.startsWith("blob:")) URL.revokeObjectURL(oldPreview);
+      return {
+        ...prev,
+        [key]: { file, preview: URL.createObjectURL(file) },
+      };
+    });
+    setImageErrors((prev) => ({ ...prev, [key]: undefined }));
+    setSubmitError(null);
+  }
+
+  function handleImageRemove(key: ImageFieldKey) {
+    setImageFields((prev) => {
+      const oldPreview = prev[key].preview;
+      if (oldPreview?.startsWith("blob:")) URL.revokeObjectURL(oldPreview);
+      return {
+        ...prev,
+        [key]: { file: null, preview: null },
+      };
+    });
+    setImageErrors((prev) => ({ ...prev, [key]: undefined }));
   }
 
   function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -971,7 +1299,7 @@ export default function UpgradeProductionForm() {
     scrollToTop();
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     let allErrors: FormErrors = {};
     let firstBadStep: number | null = null;
 
@@ -990,9 +1318,62 @@ export default function UpgradeProductionForm() {
       return;
     }
 
-    console.log("[seller-upgrade] payload:", form);
-    setSubmitted(true);
-    scrollToTop();
+    setIsSubmitting(true);
+    setSubmitError(null);
+    setUploadLabel(null);
+    onBusyChange?.(true);
+
+    try {
+      const payload = mapFormToRequest(form);
+      const production = await ProductionService.create(payload);
+
+      if (!production?.id) {
+        throw new AppError({
+          message: "پاسخ سرور نامعتبر است. لطفاً دوباره تلاش کنید.",
+          code: "INVALID_RESPONSE",
+          status: 500,
+        });
+      }
+
+      const pendingUploads = IMAGE_FIELD_DEFS.filter(
+        (def) => imageFields[def.key].file,
+      );
+
+      for (const def of pendingUploads) {
+        const file = imageFields[def.key].file!;
+        setUploadLabel(`در حال آپلود ${def.label}…`);
+        await uploadProductionImage(production.id, file, def.key);
+      }
+
+      if (isModal && onSuccess) {
+        notification.success(
+          `فروشگاه «${form.shopName.trim()}» با موفقیت ثبت شد. پس از تأیید، در لیست کارگاه‌ها نمایش داده می‌شود.`,
+        );
+        onSuccess(form.shopName.trim());
+        return;
+      }
+
+      setSubmitted(true);
+      scrollToTop();
+    } catch (err: unknown) {
+      let message = "خطا در ثبت درخواست. لطفاً دوباره تلاش کنید.";
+      if (err instanceof AppError || err instanceof ApiError) {
+        message = err.message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+
+      if (isModal) {
+        notification.error(message);
+      } else {
+        setSubmitError(message);
+      }
+      console.error("[seller-upgrade] submit error:", err);
+    } finally {
+      setIsSubmitting(false);
+      setUploadLabel(null);
+      onBusyChange?.(false);
+    }
   }
 
   const progressPercent = useMemo(
@@ -1000,9 +1381,19 @@ export default function UpgradeProductionForm() {
     [stepIndex, totalSteps],
   );
 
-  const rootClasses = "text-gray-900 px-5 min-h-full";
+  const rootClasses = isModal
+    ? "text-gray-900"
+    : "text-gray-900 px-5 min-h-full";
 
-  if (submitted) {
+  const layoutClasses = isModal
+    ? "grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-5 items-start"
+    : "max-w-[980px] mx-auto grid grid-cols-1 min-[861px]:grid-cols-[260px_1fr] gap-7 items-start";
+
+  const panelClasses = isModal
+    ? "bg-stone-50/50 border border-stone-200/80 rounded-2xl p-4 sm:p-6 flex flex-col min-h-[420px]"
+    : "bg-white border border-gray-200 rounded-2xl p-[clamp(20px,3vw,36px)] flex flex-col min-h-[480px]";
+
+  if (submitted && !isModal) {
     return (
       <div className={rootClasses} dir="rtl" lang="fa" ref={formTopRef}>
         <SuccessScreen form={form} onEdit={() => setSubmitted(false)} />
@@ -1012,7 +1403,7 @@ export default function UpgradeProductionForm() {
 
   return (
     <div className={rootClasses} dir="rtl" lang="fa" ref={formTopRef}>
-      <div className="max-w-[980px] mx-auto grid grid-cols-1 min-[861px]:grid-cols-[260px_1fr] gap-7 items-start">
+      <div className={layoutClasses}>
         <Rail
           steps={STEP_DEFS}
           current={stepIndex}
@@ -1020,7 +1411,7 @@ export default function UpgradeProductionForm() {
           onSelect={goToStep}
         />
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-[clamp(20px,3vw,36px)] flex flex-col min-h-[480px]">
+        <div className={panelClasses}>
           <MobileProgress
             current={stepIndex}
             total={totalSteps}
@@ -1038,12 +1429,22 @@ export default function UpgradeProductionForm() {
             <p className="text-[13.5px] text-gray-500 m-0">{step.subtitle}</p>
           </div>
 
+          {submitError && !isModal && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+              {submitError}
+            </div>
+          )}
+
           <div className="flex-1">
             {step.key === "identity" && (
               <StepIdentity
                 form={form}
                 errors={errors}
+                imageFields={imageFields}
+                imageErrors={imageErrors}
                 update={update}
+                onImageSelect={handleImageSelect}
+                onImageRemove={handleImageRemove}
                 uid={uid}
               />
             )}
@@ -1076,20 +1477,35 @@ export default function UpgradeProductionForm() {
               />
             )}
             {step.key === "review" && (
-              <StepReview form={form} onEditStep={goToStep} />
+              <StepReview
+                form={form}
+                imageFields={imageFields}
+                onEditStep={goToStep}
+              />
             )}
           </div>
 
           <div className="flex justify-between gap-3 mt-7 pt-5 border-t border-gray-100 max-[560px]:flex-col-reverse">
-            <LinkButton
-              type="button"
-              customClass={`${BTN_BASE} ${BTN_GHOST} max-[560px]:w-full max-[560px]:justify-center`}
-              onClick={goBack}
-              disabled={stepIndex === 0}
-            >
-              <HiOutlineChevronLeft size={16} className="rotate-180" />
-              مرحله قبل
-            </LinkButton>
+            {isModal && stepIndex === 0 && onCancel ? (
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={isSubmitting}
+                className={`${BTN_BASE} ${BTN_GHOST} max-[560px]:w-full max-[560px]:justify-center`}
+              >
+                انصراف
+              </button>
+            ) : (
+              <LinkButton
+                type="button"
+                customClass={`${BTN_BASE} ${BTN_GHOST} max-[560px]:w-full max-[560px]:justify-center`}
+                onClick={goBack}
+                disabled={stepIndex === 0}
+              >
+                <HiOutlineChevronLeft size={16} className="rotate-180" />
+                مرحله قبل
+              </LinkButton>
+            )}
 
             {stepIndex < totalSteps - 1 ? (
               <LinkButton
@@ -1103,11 +1519,21 @@ export default function UpgradeProductionForm() {
             ) : (
               <button
                 type="button"
-                className={`${BTN_BASE} ${BTN_PRIMARY} max-[560px]:w-full max-[560px]:justify-center`}
+                disabled={isSubmitting}
+                className={`${BTN_BASE} ${BTN_PRIMARY} max-[560px]:w-full max-[560px]:justify-center disabled:opacity-70`}
                 onClick={handleSubmit}
               >
-                ثبت درخواست فروشندگی
-                <HiOutlineCheck size={16} />
+                {isSubmitting ? (
+                  <>
+                    <HiOutlineArrowUpTray size={16} className="animate-pulse" />
+                    {uploadLabel ?? "در حال ثبت…"}
+                  </>
+                ) : (
+                  <>
+                    ثبت درخواست فروشندگی
+                    <HiOutlineCheck size={16} />
+                  </>
+                )}
               </button>
             )}
           </div>

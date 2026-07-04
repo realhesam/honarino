@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"log/slog"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -60,7 +61,10 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 }
 
 func (h *AuthHandler) Logout(c *fiber.Ctx) error {
-	tokenStr := c.Locals("tokenStr").(string)
+	tokenStr, ok := c.Locals("tokenStr").(string)
+	if !ok || strings.TrimSpace(tokenStr) == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(model.ErrorResponse{Error: "missing authentication token"})
+	}
 
 	if err := h.authService.Logout(c.Context(), tokenStr); err != nil {
 		slog.Error("logout failed", "err", err)

@@ -70,7 +70,7 @@ func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) 
 
 	user := toModel(row)
 
-	token, _, err := s.generateToken(user.ID)
+	token, _, err := s.generateToken(user.ID, string(*user.Role))
 	if err != nil {
 		return nil, fmt.Errorf("generate token: %w", err)
 	}
@@ -92,7 +92,7 @@ func (s *AuthService) Login(ctx context.Context, req *model.LoginRequest) (*mode
 
 	user := toModel(row)
 
-	token, _, err := s.generateToken(user.ID)
+	token, _, err := s.generateToken(user.ID, string(*user.Role))
 	if err != nil {
 		return nil, fmt.Errorf("generate token: %w", err)
 	}
@@ -122,13 +122,14 @@ func (s *AuthService) Logout(ctx context.Context, tokenStr string) error {
 	return s.rdb.Set(ctx, cache.KeyTokenBlacklist(tokenID), "1", ttl)
 }
 
-func (s *AuthService) generateToken(userID string) (tokenStr, tokenID string, err error) {
+func (s *AuthService) generateToken(userID string, role string) (tokenStr, tokenID string, err error) {
 	jti := fmt.Sprintf("%s-%d", userID, time.Now().UnixNano())
 	claims := jwt.MapClaims{
-		"sub": userID,
-		"jti": jti,
-		"exp": time.Now().Add(time.Duration(s.jwtExpire) * time.Hour).Unix(),
-		"iat": time.Now().Unix(),
+		"sub":  userID,
+		"role": role,
+		"jti":  jti,
+		"exp":  time.Now().Add(time.Duration(s.jwtExpire) * time.Hour).Unix(),
+		"iat":  time.Now().Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := token.SignedString([]byte(s.jwtSecret))

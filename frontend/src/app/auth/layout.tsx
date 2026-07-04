@@ -20,10 +20,10 @@ function Layout({
     } catch (error) {
       if (error instanceof AppError) {
         notification.error(error.message);
-        redirect("/account");
+        redirect("/dashboard");
       } else {
         notification.error("خطای غیرمنتظره‌ای رخ داد");
-        redirect("/account");
+        redirect("/dashboard");
       }
     }
   }, []);

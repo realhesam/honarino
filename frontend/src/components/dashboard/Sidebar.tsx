@@ -17,16 +17,9 @@ export interface NavLink {
 }
 
 export default function Sidebar({ links }: { links: NavLink[] }) {
-  const [scrolled, setScrolled] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { ref } = useOutsideClick(setIsSidebarOpen);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY >= 10);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => {
     setIsSidebarOpen(false);
@@ -71,42 +64,71 @@ export default function Sidebar({ links }: { links: NavLink[] }) {
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1.5 custom-scrollbar">
-          {links.map((link) => {
-            const isActive = pathname === link.href;
-            return (
-              <LinkButton
-                href={link.href}
-                key={link.href}
-                variation="btn-light"
-                customClass={`relative group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 justify-start border border-transparent
-                  ${
-                    isActive
-                      ? "bg-primary/10 text-primary border-primary/5 font-medium"
-                      : "text-stone-600 hover:bg-stone-100/80 hover:text-stone-900"
-                  }`}
-              >
-                {isActive && (
-                  <span className="absolute right-0 top-3 bottom-3 w-1 bg-primary rounded-l-full" />
-                )}
+          {(() => {
+            const activeLink = [...links]
+              .sort((a, b) => b.href.length - a.href.length)
+              .find((link) => {
+                if (link.href === "/dashboard/") {
+                  return (
+                    pathname === "/dashboard" || pathname === "/dashboard/"
+                  );
+                }
 
-                <span
-                  className={`shrink-0 transition-colors duration-200 *:size-5.5
-                    ${isActive ? "text-primary" : "text-stone-400 group-hover:text-stone-600"}`}
+                if (link.href === "/dashboard/vendor") {
+                  return (
+                    pathname === "/dashboard/vendor" ||
+                    pathname === "/dashboard/vendor/"
+                  );
+                }
+
+                if (link.href === "/dashboard/admin") {
+                  return (
+                    pathname === "/dashboard/admin" ||
+                    pathname === "/dashboard/admin/"
+                  );
+                }
+
+                return pathname.startsWith(link.href);
+              });
+
+            return links.map((link) => {
+              const isActive = activeLink?.href === link.href;
+
+              return (
+                <LinkButton
+                  href={link.href}
+                  key={link.href}
+                  variation="btn-light"
+                  customClass={`relative group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 justify-start border border-transparent
+            ${
+              isActive
+                ? "bg-primary/10 text-primary border-primary/5 font-medium"
+                : "text-stone-600 hover:bg-stone-100/80 hover:text-stone-900"
+            }`}
                 >
-                  {link.icon}
-                </span>
+                  {isActive && (
+                    <span className="absolute right-0 top-3 bottom-3 w-1 bg-primary rounded-l-full" />
+                  )}
 
-                <span className="text-sm">{link.label}</span>
+                  <span
+                    className={`shrink-0 transition-colors duration-200 *:size-5.5
+              ${isActive ? "text-primary" : "text-stone-400 group-hover:text-stone-600"}`}
+                  >
+                    {link.icon}
+                  </span>
 
-                <span
-                  className={`mr-auto transition-transform duration-200 *:size-4
-                    ${isActive ? "text-primary translate-x-0" : "text-stone-300 opacity-0 group-hover:opacity-100 group-hover:-translate-x-1"}`}
-                >
-                  <HiChevronLeft />
-                </span>
-              </LinkButton>
-            );
-          })}
+                  <span className="text-sm">{link.label}</span>
+
+                  <span
+                    className={`mr-auto transition-transform duration-200 *:size-4
+              ${isActive ? "text-primary translate-x-0" : "text-stone-300 opacity-0 group-hover:opacity-100 group-hover:-translate-x-1"}`}
+                  >
+                    <HiChevronLeft />
+                  </span>
+                </LinkButton>
+              );
+            });
+          })()}
         </nav>
 
         <div className="p-4 border-t border-stone-200/60 shrink-0 bg-gradient-to-t from-white to-transparent lg:from-stone-50/50">

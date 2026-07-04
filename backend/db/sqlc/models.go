@@ -11,6 +11,49 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type ProductionMemberRole string
+
+const (
+	ProductionMemberRoleOwner  ProductionMemberRole = "owner"
+	ProductionMemberRoleAdmin  ProductionMemberRole = "admin"
+	ProductionMemberRoleEditor ProductionMemberRole = "editor"
+)
+
+func (e *ProductionMemberRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ProductionMemberRole(s)
+	case string:
+		*e = ProductionMemberRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ProductionMemberRole: %T", src)
+	}
+	return nil
+}
+
+type NullProductionMemberRole struct {
+	ProductionMemberRole ProductionMemberRole `json:"production_member_role"`
+	Valid                bool                 `json:"valid"` // Valid is true if ProductionMemberRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullProductionMemberRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.ProductionMemberRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ProductionMemberRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullProductionMemberRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ProductionMemberRole), nil
+}
+
 type UserRole string
 
 const (
@@ -54,6 +97,38 @@ func (ns NullUserRole) Value() (driver.Value, error) {
 	return string(ns.UserRole), nil
 }
 
+type Production struct {
+	ID                pgtype.UUID        `json:"id"`
+	ShopID            string             `json:"shop_id"`
+	ShopName          string             `json:"shop_name"`
+	ShopDescription   string             `json:"shop_description"`
+	Categories        []string           `json:"categories"`
+	ProductionAddress string             `json:"production_address"`
+	ProductionPhone   string             `json:"production_phone"`
+	ProductionEmail   string             `json:"production_email"`
+	Telegram          pgtype.Text        `json:"telegram"`
+	Rubika            pgtype.Text        `json:"rubika"`
+	Eitaa             pgtype.Text        `json:"eitaa"`
+	Whatsapp          pgtype.Text        `json:"whatsapp"`
+	Website           pgtype.Text        `json:"website"`
+	LogoUrl           pgtype.Text        `json:"logo_url"`
+	BannerUrl         pgtype.Text        `json:"banner_url"`
+	CoverUrl          pgtype.Text        `json:"cover_url"`
+	Active            bool               `json:"active"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type ProductionMember struct {
+	ID           pgtype.UUID          `json:"id"`
+	ProductionID pgtype.UUID          `json:"production_id"`
+	UserID       pgtype.UUID          `json:"user_id"`
+	Role         ProductionMemberRole `json:"role"`
+	CreatedAt    pgtype.Timestamptz   `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz   `json:"updated_at"`
+}
+
 type User struct {
 	ID                pgtype.UUID        `json:"id"`
 	Name              string             `json:"name"`
@@ -67,4 +142,17 @@ type User struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type VendorRequest struct {
+	ID          pgtype.UUID        `json:"id"`
+	UserID      pgtype.UUID        `json:"user_id"`
+	Fullname    string             `json:"fullname"`
+	Nid         string             `json:"nid"`
+	Phone       string             `json:"phone"`
+	Email       string             `json:"email"`
+	Description pgtype.Text        `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
 }

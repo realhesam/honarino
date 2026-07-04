@@ -5,6 +5,10 @@ export interface AccountResponse extends User {
     phone?: string;
     address?: string;
     profile_picture_url?: string;
+    queriesCount?: number;
+    favoritesCount?: number;
+    notificationsCount?: number;
+    role?: "user" | "vendor" | "admin";
 }
 
 export interface AccountUpdate {

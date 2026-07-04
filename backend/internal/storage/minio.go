@@ -142,6 +142,10 @@ func (m *MinioClient) publicURL(objectName string) string {
 	return fmt.Sprintf("%s://%s/%s/%s", m.scheme(), m.publicEndpoint, m.bucket, objectName)
 }
 
+func (m *MinioClient) PublicURL(objectName string) string {
+	return m.publicURL(objectName)
+}
+
 func (m *MinioClient) scheme() string {
 	if m.useSSL {
 		return "https"

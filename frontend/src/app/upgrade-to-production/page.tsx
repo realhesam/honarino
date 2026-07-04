@@ -1,4 +1,4 @@
-import UpgradeProductionForm from "@/components/production/UpgradeProductionForm";
+import UpgradeProductionForm from "@/components/production/CreateProductionForm";
 import LinkButton from "@/ui/LinkButton";
 import { HiChevronLeft } from "react-icons/hi2";
 import { PiFactoryFill } from "react-icons/pi";

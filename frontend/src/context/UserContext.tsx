@@ -30,7 +30,7 @@ interface UserContextValue {
   isVendor: boolean;
   isBasicUser: boolean;
   fetchUserData: () => Promise<void>;
-  updateProfile: (profileData: any, selectedFile: File | null) => Promise<boolean>; // خروجی Boolean برای فهمیدن وضعیت آپلود موفق فایل
+  updateProfile: (profileData: any, selectedFile: File | null) => Promise<boolean>;
   changePassword: (currentPass: string, newPass: string) => Promise<void>;
 }
 
@@ -51,7 +51,7 @@ export function UserProvider({
       setIsLoading(true);
       AuthService.requireAuth();
       const response = await AccountService.get_user_data();
-      
+      console.log(response);
       setUser({
         id: response.id || "0",
         username: response.username,
@@ -63,11 +63,14 @@ export function UserProvider({
         queriesCount: response.queriesCount || 0,
         favoritesCount: response.favoritesCount || 0,
         notificationsCount: response.notificationsCount || 0,
-        role: response.admin === "1" || response.admin === true ? "admin" : "user",
+        role: response.role as UserRole || "user",
       });
     } catch (error) {
       if (error instanceof AppError) {
+        AuthService.logout();
+
         redirect("/auth/signin");
+        
       }
     } finally {
       setIsLoading(false);
@@ -87,8 +90,7 @@ export function UserProvider({
     let isUploaded = false;
 
     if (selectedFile) {
-      // پاس دادن کالبک به متد سرویس آپلود
-      const { publicUrl } = await AccountService.upload_file(selectedFile, onProgress);
+      const { publicUrl } = await AccountService.upload_file(selectedFile);
       profileUrl = publicUrl;
       isUploaded = true;
     }
