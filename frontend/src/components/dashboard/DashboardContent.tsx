@@ -65,6 +65,11 @@ const adminPanelLinks: NavLink[] = [
     href: "/dashboard/admin/productions",
   },
   {
+    icon: <HiViewGrid />,
+    label: "مدیریت دسته بندی ها",
+    href: "/dashboard/admin/categories",
+  },
+  {
     icon: <HiBadgeCheck />,
     label: "درخواست ارتقا حساب",
     href: "/dashboard/admin/production-requests",

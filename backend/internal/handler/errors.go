@@ -32,6 +32,11 @@ var errorMap = map[error]errorConfig{
 	service.ErrInvalidMediaType:           {Status: fiber.StatusBadRequest, Text: service.ErrInvalidMediaType.Error()},
 	service.ErrProductionNotActive:        {Status: fiber.StatusForbidden, Text: service.ErrProductionNotActive.Error()},
 	service.ErrShopIDTaken:                {Status: fiber.StatusConflict, Text: service.ErrShopIDTaken.Error()},
+	service.ErrCategoryNotFound:           {Status: fiber.StatusForbidden, Text: service.ErrCategoryNotFound.Error()},
+	service.ErrParentNotFound:             {Status: fiber.StatusNotFound, Text: service.ErrParentNotFound.Error()},
+	service.ErrSlugTaken:                  {Status: fiber.StatusConflict, Text: service.ErrSlugTaken.Error()},
+	service.ErrCategoryHasChildren:        {Status: fiber.StatusForbidden, Text: service.ErrCategoryHasChildren.Error()},
+	service.ErrInvalidParentCircle:        {Status: fiber.StatusBadRequest, Text: service.ErrInvalidParentCircle.Error()},
 }
 
 func handleError(c *fiber.Ctx, err error, fallbackMessage string) error {

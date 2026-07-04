@@ -59,7 +59,6 @@ INNER JOIN production_members pm
 INNER JOIN users u 
     ON u.id = pm.user_id
 WHERE p.deleted_at IS NULL
-  -- فیلترهای مشابه برای شمارش دقیق تعداد کل در پجینیشن
   AND ($1::text = '' OR p.shop_name ILIKE '%' || $1 || '%' OR u.name ILIKE '%' || $1 || '%' OR p.production_phone ILIKE '%' || $1 || '%')
   AND (
     $2::text = 'all' OR $2 = '' 
@@ -430,9 +429,7 @@ INNER JOIN production_members pm
 INNER JOIN users u 
     ON u.id = pm.user_id
 WHERE p.deleted_at IS NULL
-  -- فیلتر جستجو (روی نام کارگاه، نام مالک و شماره تلفن)
   AND ($3::text = '' OR p.shop_name ILIKE '%' || $3 || '%' OR u.name ILIKE '%' || $3 || '%' OR p.production_phone ILIKE '%' || $3 || '%')
-  -- فیلتر وضعیت
   AND (
     $4::text = 'all' OR $4 = '' 
     OR ($4 = 'active' AND p.active = TRUE) 

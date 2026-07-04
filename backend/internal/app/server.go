@@ -25,6 +25,7 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, rdb *cache.Redis, queries *
 	profileSvc := service.NewProfileService(queries, rdb)
 	vendorSvc := service.NewVendorService(queries)
 	productionSvc := service.NewProductionService(queries, db)
+	categorySvc := service.NewCategoryService(queries) // اضافه شد
 
 	var minioClient *storage.MinioClient
 	if cfg.MinioEndpoint != "" {
@@ -49,6 +50,7 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, rdb *cache.Redis, queries *
 	profileHdl := handler.NewProfileHandler(profileSvc, minioClient)
 	vendorHdl := handler.NewVendorHandler(vendorSvc)
 	productionHdl := handler.NewProductionHandler(productionSvc, minioClient)
+	categoryHdl := handler.NewCategoryHandler(categorySvc) // اضافه شد
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -67,7 +69,7 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, rdb *cache.Redis, queries *
 		AllowHeaders: "Origin, Content-Type, Authorization",
 	}))
 
-	registerRoutes(app, cfg, db, rdb, authHdl, profileHdl, vendorHdl, productionHdl)
+	registerRoutes(app, cfg, db, rdb, authHdl, profileHdl, vendorHdl, productionHdl, categoryHdl)
 	return app
 }
 
@@ -76,6 +78,7 @@ func registerRoutes(app *fiber.App, cfg *config.Config, db *pgxpool.Pool, rdb *c
 	profileHdl *handler.ProfileHandler,
 	vendorHdl *handler.VendorHandler,
 	productionHdl *handler.ProductionHandler,
+	categoryHdl *handler.CategoryHandler,
 ) {
 	api := app.Group("/api/v1")
 
@@ -122,6 +125,23 @@ func registerRoutes(app *fiber.App, cfg *config.Config, db *pgxpool.Pool, rdb *c
 	productions.Post("/:id/approve", productionHdl.ActiveProduction)
 	productions.Post("/:id/deactive", productionHdl.DeactiveProduction)
 	productions.Post("/:id/isactive", productionHdl.IsProductionActive)
+
+	categories := api.Group("/categories")
+	categories.Get("/", categoryHdl.ListRootCategories)
+	categories.Get("/all", categoryHdl.ListAllCategories)
+	categories.Get("/:id", categoryHdl.GetCategory)
+	categories.Get("/:id/children", categoryHdl.ListChildCategories)
+	categories.Get("/:id/ancestors", categoryHdl.GetCategoryAncestors)
+	categories.Get("/:id/descendants", categoryHdl.GetCategoryDescendants)
+	categories.Get("/slug/:slug", categoryHdl.GetCategoryBySlug)
+
+	categoriesAdmin := api.Group("/admin/categories", protected, middleware.RequireRole("admin"))
+	categoriesAdmin.Post("/", categoryHdl.CreateCategory)
+	categoriesAdmin.Get("/", categoryHdl.ListAllCategoriesAdmin)
+	categoriesAdmin.Patch("/:id", categoryHdl.UpdateCategory)
+	categoriesAdmin.Delete("/:id", categoryHdl.DeleteCategory)
+	categoriesAdmin.Post("/:id/activate", categoryHdl.ActivateCategory)
+	categoriesAdmin.Post("/:id/deactivate", categoryHdl.DeactivateCategory)
 
 	app.Get("/health", func(c *fiber.Ctx) error {
 		if err := db.Ping(c.Context()); err != nil {
