@@ -113,6 +113,7 @@ func registerRoutes(app *fiber.App, cfg *config.Config, db *pgxpool.Pool, rdb *c
 	productions.Delete("/:id", productionHdl.DeleteProduction)
 	productions.Get("/:id/members/search", productionHdl.SearchUsersForMembership)
 	productions.Get("/:id/members", productionHdl.ListMembers)
+	productions.Get("/:id/members/count", productionHdl.GetMembersCount)
 	productions.Post("/:id/members", productionHdl.AddMember)
 	productions.Patch("/:id/members/:userID", productionHdl.UpdateMemberRole)
 	productions.Delete("/:id/members/:userID", productionHdl.RemoveMember)
