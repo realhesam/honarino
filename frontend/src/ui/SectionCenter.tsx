@@ -1,7 +1,7 @@
 type PropsType = {
   children: React.ReactElement;
   title: string;
-  text?: string;
+  text?: string | React.ReactElement;
   render?: [any[], () => React.ReactElement];
   subTitle?: boolean;
 };
