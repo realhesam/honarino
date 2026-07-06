@@ -1,21 +1,20 @@
 -- name: CreateProduction :one
 INSERT INTO productions (
     shop_id,
-    shop_name, 
-    shop_description, 
-    categories,
-    production_address, 
-    production_phone, 
+    shop_name,
+    shop_description,
+    production_address,
+    production_phone,
     production_email,
-    telegram, 
-    rubika, 
-    eitaa, 
-    whatsapp, 
+    telegram,
+    rubika,
+    eitaa,
+    whatsapp,
     website,
     active
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-RETURNING id, shop_id, shop_name, shop_description, categories,
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+RETURNING id, shop_id, shop_name, shop_description,
           production_address, production_phone, production_email,
           telegram, rubika, eitaa, whatsapp, website,
           logo_url, banner_url, cover_url,
@@ -23,7 +22,7 @@ RETURNING id, shop_id, shop_name, shop_description, categories,
           created_at, updated_at, deleted_at;
 
 -- name: GetProductionByID :one
-SELECT id, shop_id, shop_name, shop_description, categories,
+SELECT id, shop_id, shop_name, shop_description,
        production_address, production_phone, production_email,
        telegram, rubika, eitaa, whatsapp, website,
        logo_url, banner_url, cover_url,
@@ -37,7 +36,6 @@ UPDATE productions SET
     shop_id            = coalesce(sqlc.narg(shop_id),            shop_id),
     shop_name          = coalesce(sqlc.narg(shop_name),          shop_name),
     shop_description   = coalesce(sqlc.narg(shop_description),   shop_description),
-    categories         = coalesce(sqlc.narg(categories),         categories),
     production_address = coalesce(sqlc.narg(production_address), production_address),
     production_phone   = coalesce(sqlc.narg(production_phone),   production_phone),
     production_email   = coalesce(sqlc.narg(production_email),   production_email),
@@ -48,7 +46,7 @@ UPDATE productions SET
     website            = coalesce(sqlc.narg(website),            website),
     updated_at         = NOW()
 WHERE id = sqlc.arg(id) AND deleted_at IS NULL
-RETURNING id, shop_id, shop_name, shop_description, categories,
+RETURNING id, shop_id, shop_name, shop_description,
           production_address, production_phone, production_email,
           telegram, rubika, eitaa, whatsapp, website,
           logo_url, banner_url, cover_url,
@@ -68,29 +66,28 @@ UPDATE productions SET deleted_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: ListProductionsByUserID :many
-SELECT p.id, 
+SELECT p.id,
        p.shop_id,
-       p.shop_name, 
-       p.shop_description, 
-       p.categories,
-       p.production_address, 
-       p.production_phone, 
+       p.shop_name,
+       p.shop_description,
+       p.production_address,
+       p.production_phone,
        p.production_email,
-       p.telegram, 
-       p.rubika, 
-       p.eitaa, 
-       p.whatsapp, 
+       p.telegram,
+       p.rubika,
+       p.eitaa,
+       p.whatsapp,
        p.website,
-       p.logo_url, 
-       p.banner_url, 
+       p.logo_url,
+       p.banner_url,
        p.cover_url,
        p.active,
-       p.created_at, 
+       p.created_at,
        p.updated_at,
        pm.role AS member_role
 FROM productions p
 INNER JOIN production_members pm ON pm.production_id = p.id
-WHERE pm.user_id = $1 
+WHERE pm.user_id = $1
   AND p.deleted_at IS NULL
 ORDER BY p.created_at DESC
 LIMIT $2 OFFSET $3;
@@ -169,12 +166,12 @@ SELECT EXISTS (
 ) AS has_role;
 
 -- name: ActivateProduction :execrows
-UPDATE productions 
+UPDATE productions
 SET active = TRUE, updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: DeactivateProduction :execrows
-UPDATE productions 
+UPDATE productions
 SET active = FALSE, updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL;
 
@@ -184,44 +181,43 @@ FROM productions
 WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: IsProductionActive :one
-SELECT active 
-FROM productions 
+SELECT active
+FROM productions
 WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: ListAllProductions :many
-SELECT p.id, 
+SELECT p.id,
        p.shop_id,
-       p.shop_name, 
-       p.shop_description, 
-       p.categories,
-       p.production_address, 
-       p.production_phone, 
+       p.shop_name,
+       p.shop_description,
+       p.production_address,
+       p.production_phone,
        p.production_email,
-       p.telegram, 
-       p.rubika, 
-       p.eitaa, 
-       p.whatsapp, 
+       p.telegram,
+       p.rubika,
+       p.eitaa,
+       p.whatsapp,
        p.website,
-       p.logo_url, 
-       p.banner_url, 
+       p.logo_url,
+       p.banner_url,
        p.cover_url,
        p.active,
-       p.created_at, 
+       p.created_at,
        p.updated_at,
        u.id   AS owner_id,
        u.name AS owner_name,
        u.username AS owner_username,
        u.email AS owner_email
 FROM productions p
-INNER JOIN production_members pm 
+INNER JOIN production_members pm
     ON pm.production_id = p.id AND pm.role = 'owner'
-INNER JOIN users u 
+INNER JOIN users u
     ON u.id = pm.user_id
 WHERE p.deleted_at IS NULL
   AND ($3::text = '' OR p.shop_name ILIKE '%' || $3 || '%' OR u.name ILIKE '%' || $3 || '%' OR p.production_phone ILIKE '%' || $3 || '%')
   AND (
-    $4::text = 'all' OR $4 = '' 
-    OR ($4 = 'active' AND p.active = TRUE) 
+    $4::text = 'all' OR $4 = ''
+    OR ($4 = 'active' AND p.active = TRUE)
     OR ($4 = 'inactive' AND p.active = FALSE)
   )
 ORDER BY p.created_at DESC
@@ -230,15 +226,15 @@ LIMIT $1 OFFSET $2;
 -- name: CountAllProductions :one
 SELECT COUNT(*)
 FROM productions p
-INNER JOIN production_members pm 
+INNER JOIN production_members pm
     ON pm.production_id = p.id AND pm.role = 'owner'
-INNER JOIN users u 
+INNER JOIN users u
     ON u.id = pm.user_id
 WHERE p.deleted_at IS NULL
   AND ($1::text = '' OR p.shop_name ILIKE '%' || $1 || '%' OR u.name ILIKE '%' || $1 || '%' OR p.production_phone ILIKE '%' || $1 || '%')
   AND (
-    $2::text = 'all' OR $2 = '' 
-    OR ($2 = 'active' AND p.active = TRUE) 
+    $2::text = 'all' OR $2 = ''
+    OR ($2 = 'active' AND p.active = TRUE)
     OR ($2 = 'inactive' AND p.active = FALSE)
   );
 

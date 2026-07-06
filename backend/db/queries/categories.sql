@@ -216,3 +216,12 @@ SELECT EXISTS (
 SELECT COUNT(*)
 FROM categories
 WHERE parent_id = $1 AND deleted_at IS NULL;
+
+-- name: GetRootCategoryByName :one
+SELECT id, parent_id, name, slug, description, active,
+       created_at, updated_at, deleted_at
+FROM categories
+WHERE parent_id IS NULL
+  AND deleted_at IS NULL
+  AND lower(name) = lower($1)
+LIMIT 1;

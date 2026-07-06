@@ -389,6 +389,33 @@ func (q *Queries) GetCategoryWithParent(ctx context.Context, id pgtype.UUID) (Ge
 	return i, err
 }
 
+const getRootCategoryByName = `-- name: GetRootCategoryByName :one
+SELECT id, parent_id, name, slug, description, active,
+       created_at, updated_at, deleted_at
+FROM categories
+WHERE parent_id IS NULL
+  AND deleted_at IS NULL
+  AND lower(name) = lower($1)
+LIMIT 1
+`
+
+func (q *Queries) GetRootCategoryByName(ctx context.Context, lower string) (Category, error) {
+	row := q.db.QueryRow(ctx, getRootCategoryByName, lower)
+	var i Category
+	err := row.Scan(
+		&i.ID,
+		&i.ParentID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.Active,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const hasChildren = `-- name: HasChildren :one
 SELECT EXISTS (
     SELECT 1 FROM categories

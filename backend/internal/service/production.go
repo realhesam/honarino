@@ -74,7 +74,151 @@ func (s *ProductionService) CheckProductionActive(ctx context.Context, productio
 	return nil
 }
 
-func (s *ProductionService) CreateProduction(ctx context.Context, userID string, req *model.CreateProductionRequest) (*dbsqlc.Production, error) {
+func (s *ProductionService) resolveRootCategoryIDs(ctx context.Context, qtx *dbsqlc.Queries, names []string) ([]pgtype.UUID, error) {
+	seen := make(map[string]bool)
+	ids := make([]pgtype.UUID, 0, len(names))
+
+	for _, raw := range names {
+		name := strings.TrimSpace(raw)
+		if name == "" {
+			continue
+		}
+
+		key := strings.ToLower(name)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+
+		existing, err := qtx.GetRootCategoryByName(ctx, name)
+		if err == nil {
+			ids = append(ids, existing.ID)
+			continue
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return nil, err
+		}
+
+		slug := slugifyName(name)
+		created, createErr := qtx.CreateCategory(ctx, dbsqlc.CreateCategoryParams{
+			ParentID:    pgtype.UUID{Valid: false},
+			Name:        name,
+			Slug:        slug,
+			Description: pgtype.Text{Valid: false},
+			Active:      true,
+		})
+		if createErr != nil {
+			if isUniqueViolation(createErr) {
+				retryExisting, retryErr := qtx.GetRootCategoryByName(ctx, name)
+				if retryErr != nil {
+					return nil, retryErr
+				}
+				ids = append(ids, retryExisting.ID)
+				continue
+			}
+			return nil, createErr
+		}
+
+		ids = append(ids, created.ID)
+	}
+
+	return ids, nil
+}
+
+func (s *ProductionService) syncProductionCategories(ctx context.Context, qtx *dbsqlc.Queries, productionID pgtype.UUID, categoryIDs []pgtype.UUID) error {
+	if err := qtx.ClearProductionCategories(ctx, productionID); err != nil {
+		return err
+	}
+	for _, cid := range categoryIDs {
+		if err := qtx.AddProductionCategory(ctx, dbsqlc.AddProductionCategoryParams{
+			ProductionID: productionID,
+			CategoryID:   cid,
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func toProductionCategoryInfo(rows []dbsqlc.ListProductionCategoriesRow) []model.ProductionCategoryInfo {
+	result := make([]model.ProductionCategoryInfo, 0, len(rows))
+	for _, r := range rows {
+		result = append(result, model.ProductionCategoryInfo{
+			ID:       r.ID,
+			Name:     r.Name,
+			Slug:     r.Slug,
+			ParentID: r.ParentID,
+		})
+	}
+	return result
+}
+
+func (s *ProductionService) fetchCategoriesForProductions(ctx context.Context, productionIDs []pgtype.UUID) (map[pgtype.UUID][]model.ProductionCategoryInfo, error) {
+	result := make(map[pgtype.UUID][]model.ProductionCategoryInfo)
+	if len(productionIDs) == 0 {
+		return result, nil
+	}
+
+	rows, err := s.queries.ListCategoriesForProductions(ctx, productionIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range rows {
+		result[r.ProductionID] = append(result[r.ProductionID], model.ProductionCategoryInfo{
+			ID:       r.ID,
+			Name:     r.Name,
+			Slug:     r.Slug,
+			ParentID: r.ParentID,
+		})
+	}
+
+	return result, nil
+}
+
+func (s *ProductionService) GetProductionCategories(ctx context.Context, productionID string) ([]dbsqlc.ListProductionCategoriesRow, error) {
+	pid, err := parseUUID(productionID)
+	if err != nil {
+		return nil, ErrProductionNotFound
+	}
+
+	rows, err := s.queries.ListProductionCategories(ctx, pid)
+	if err != nil {
+		return nil, err
+	}
+	if rows == nil {
+		rows = []dbsqlc.ListProductionCategoriesRow{}
+	}
+	return rows, nil
+}
+
+func (s *ProductionService) ListProductionsByCategory(ctx context.Context, categoryID string, params model.PaginationParams) ([]dbsqlc.ListActiveProductionsByCategoryRow, int64, error) {
+	cid, err := parseUUID(categoryID)
+	if err != nil {
+		return nil, 0, ErrCategoryNotFound
+	}
+
+	rows, err := s.queries.ListActiveProductionsByCategory(ctx, dbsqlc.ListActiveProductionsByCategoryParams{
+		CategoryID: cid,
+		Limit:      int32(params.Limit),
+		Offset:     int32(params.Offset),
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+	if rows == nil {
+		rows = []dbsqlc.ListActiveProductionsByCategoryRow{}
+	}
+
+	total, err := s.queries.CountActiveProductionsByCategory(ctx, cid)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return rows, total, nil
+}
+
+func (s *ProductionService) CreateProduction(ctx context.Context, userID string, req *model.CreateProductionRequest) (*model.ProductionWithCategories, error) {
 	uid, err := parseUUID(userID)
 	if err != nil {
 		return nil, ErrUserNotFound
@@ -99,7 +243,6 @@ func (s *ProductionService) CreateProduction(ctx context.Context, userID string,
 		ShopID:            req.ShopID,
 		ShopName:          req.ShopName,
 		ShopDescription:   req.ShopDescription,
-		Categories:        req.Categories,
 		ProductionAddress: req.ProductionAddress,
 		ProductionPhone:   req.ProductionPhone,
 		ProductionEmail:   req.ProductionEmail,
@@ -125,14 +268,30 @@ func (s *ProductionService) CreateProduction(ctx context.Context, userID string,
 		return nil, err
 	}
 
+	categoryIDs, err := s.resolveRootCategoryIDs(ctx, qtx, req.Categories)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.syncProductionCategories(ctx, qtx, production.ID, categoryIDs); err != nil {
+		return nil, err
+	}
+
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
 
-	return &production, nil
+	categoryRows, err := s.queries.ListProductionCategories(ctx, production.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.ProductionWithCategories{
+		Production: production,
+		Categories: toProductionCategoryInfo(categoryRows),
+	}, nil
 }
 
-func (s *ProductionService) GetProduction(ctx context.Context, userID string, isGlobalAdmin bool, productionID string) (*dbsqlc.Production, error) {
+func (s *ProductionService) GetProduction(ctx context.Context, userID string, isGlobalAdmin bool, productionID string) (*model.ProductionWithCategories, error) {
 	uid, err := parseUUID(userID)
 	if err != nil {
 		return nil, ErrUserNotFound
@@ -159,10 +318,18 @@ func (s *ProductionService) GetProduction(ctx context.Context, userID string, is
 		return nil, err
 	}
 
-	return &production, nil
+	categoryRows, err := s.queries.ListProductionCategories(ctx, pid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.ProductionWithCategories{
+		Production: production,
+		Categories: toProductionCategoryInfo(categoryRows),
+	}, nil
 }
 
-func (s *ProductionService) ListMyProductions(ctx context.Context, userID string, params model.PaginationParams) ([]dbsqlc.ListProductionsByUserIDRow, int64, error) {
+func (s *ProductionService) ListMyProductions(ctx context.Context, userID string, params model.PaginationParams) ([]model.ProductionListItemWithCategories, int64, error) {
 	uid, err := parseUUID(userID)
 	if err != nil {
 		return nil, 0, ErrUserNotFound
@@ -176,9 +343,30 @@ func (s *ProductionService) ListMyProductions(ctx context.Context, userID string
 	if err != nil {
 		return nil, 0, err
 	}
-
 	if rows == nil {
 		rows = []dbsqlc.ListProductionsByUserIDRow{}
+	}
+
+	productionIDs := make([]pgtype.UUID, 0, len(rows))
+	for _, r := range rows {
+		productionIDs = append(productionIDs, r.ID)
+	}
+
+	categoriesByProduction, err := s.fetchCategoriesForProductions(ctx, productionIDs)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	result := make([]model.ProductionListItemWithCategories, 0, len(rows))
+	for _, r := range rows {
+		categories := categoriesByProduction[r.ID]
+		if categories == nil {
+			categories = []model.ProductionCategoryInfo{}
+		}
+		result = append(result, model.ProductionListItemWithCategories{
+			ListProductionsByUserIDRow: r,
+			Categories:                 categories,
+		})
 	}
 
 	total, err := s.queries.CountProductionsByUserID(ctx, uid)
@@ -186,10 +374,10 @@ func (s *ProductionService) ListMyProductions(ctx context.Context, userID string
 		return nil, 0, err
 	}
 
-	return rows, total, nil
+	return result, total, nil
 }
 
-func (s *ProductionService) ListAllProductions(ctx context.Context, isGlobalAdmin bool, params model.PaginationParams) ([]dbsqlc.ListAllProductionsRow, int64, error) {
+func (s *ProductionService) ListAllProductions(ctx context.Context, isGlobalAdmin bool, params model.PaginationParams) ([]model.ProductionAdminListItemWithCategories, int64, error) {
 	if !isGlobalAdmin {
 		return nil, 0, ErrForbidden
 	}
@@ -207,6 +395,28 @@ func (s *ProductionService) ListAllProductions(ctx context.Context, isGlobalAdmi
 		rows = []dbsqlc.ListAllProductionsRow{}
 	}
 
+	productionIDs := make([]pgtype.UUID, 0, len(rows))
+	for _, r := range rows {
+		productionIDs = append(productionIDs, r.ID)
+	}
+
+	categoriesByProduction, err := s.fetchCategoriesForProductions(ctx, productionIDs)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	result := make([]model.ProductionAdminListItemWithCategories, 0, len(rows))
+	for _, r := range rows {
+		categories := categoriesByProduction[r.ID]
+		if categories == nil {
+			categories = []model.ProductionCategoryInfo{}
+		}
+		result = append(result, model.ProductionAdminListItemWithCategories{
+			ListAllProductionsRow: r,
+			Categories:            categories,
+		})
+	}
+
 	total, err := s.queries.CountAllProductions(ctx, dbsqlc.CountAllProductionsParams{
 		Column1: params.Search,
 		Column2: params.Status,
@@ -214,10 +424,11 @@ func (s *ProductionService) ListAllProductions(ctx context.Context, isGlobalAdmi
 	if err != nil {
 		return nil, 0, err
 	}
-	return rows, total, nil
+
+	return result, total, nil
 }
 
-func (s *ProductionService) UpdateProduction(ctx context.Context, userID, productionID string, req *model.UpdateProductionRequest, isGlobalAdmin bool) (*dbsqlc.Production, error) {
+func (s *ProductionService) UpdateProduction(ctx context.Context, userID, productionID string, req *model.UpdateProductionRequest, isGlobalAdmin bool) (*model.ProductionWithCategories, error) {
 	if err := s.CheckProductionActive(ctx, productionID); err != nil {
 		return nil, err
 	}
@@ -240,12 +451,26 @@ func (s *ProductionService) UpdateProduction(ctx context.Context, userID, produc
 		return nil, ErrForbidden
 	}
 
-	row, err := s.queries.UpdateProduction(ctx, dbsqlc.UpdateProductionParams{
+	pool, ok := s.db.(interface {
+		Begin(context.Context) (pgx.Tx, error)
+	})
+	if !ok {
+		return nil, errors.New("db does not support transactions")
+	}
+
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := s.queries.WithTx(tx)
+
+	row, err := qtx.UpdateProduction(ctx, dbsqlc.UpdateProductionParams{
 		ID:                pid,
 		ShopID:            pgtype.Text{String: req.ShopID, Valid: req.ShopID != ""},
 		ShopName:          pgtype.Text{String: req.ShopName, Valid: req.ShopName != ""},
 		ShopDescription:   pgtype.Text{String: req.ShopDescription, Valid: req.ShopDescription != ""},
-		Categories:        req.Categories,
 		ProductionAddress: pgtype.Text{String: req.ProductionAddress, Valid: req.ProductionAddress != ""},
 		ProductionPhone:   pgtype.Text{String: req.ProductionPhone, Valid: req.ProductionPhone != ""},
 		ProductionEmail:   pgtype.Text{String: req.ProductionEmail, Valid: req.ProductionEmail != ""},
@@ -265,12 +490,25 @@ func (s *ProductionService) UpdateProduction(ctx context.Context, userID, produc
 		return nil, err
 	}
 
+	if req.Categories != nil {
+		categoryIDs, err := s.resolveRootCategoryIDs(ctx, qtx, req.Categories)
+		if err != nil {
+			return nil, err
+		}
+		if err := s.syncProductionCategories(ctx, qtx, pid, categoryIDs); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
 	production := dbsqlc.Production{
 		ID:                row.ID,
 		ShopID:            row.ShopID,
 		ShopName:          row.ShopName,
 		ShopDescription:   row.ShopDescription,
-		Categories:        row.Categories,
 		ProductionAddress: row.ProductionAddress,
 		ProductionPhone:   row.ProductionPhone,
 		ProductionEmail:   row.ProductionEmail,
@@ -287,7 +525,15 @@ func (s *ProductionService) UpdateProduction(ctx context.Context, userID, produc
 		DeletedAt:         row.DeletedAt,
 	}
 
-	return &production, nil
+	categoryRows, err := s.queries.ListProductionCategories(ctx, pid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.ProductionWithCategories{
+		Production: production,
+		Categories: toProductionCategoryInfo(categoryRows),
+	}, nil
 }
 
 func (s *ProductionService) DeleteProduction(ctx context.Context, userID, productionID string, isGlobalAdmin bool) error {

@@ -1,5 +1,11 @@
 package model
 
+import (
+	dbsqlc "backend/db/sqlc"
+
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
 type CreateProductionRequest struct {
 	ShopID            string   `json:"shop_id"            validate:"required,min=3,max=50"`
 	ShopName          string   `json:"shop_name"          validate:"required,min=2,max=80"`
@@ -53,4 +59,25 @@ type MembersCountResponse struct {
 	Total       int `json:"total"`
 	EditorTotal int `json:"editorTotal"`
 	AdminTotal  int `json:"adminTotal"`
+}
+type ProductionCategoryInfo struct {
+	ID       pgtype.UUID `json:"id"`
+	Name     string      `json:"name"`
+	Slug     string      `json:"slug"`
+	ParentID pgtype.UUID `json:"parent_id"`
+}
+
+type ProductionWithCategories struct {
+	dbsqlc.Production
+	Categories []ProductionCategoryInfo `json:"categories"`
+}
+
+type ProductionListItemWithCategories struct {
+	dbsqlc.ListProductionsByUserIDRow
+	Categories []ProductionCategoryInfo `json:"categories"`
+}
+
+type ProductionAdminListItemWithCategories struct {
+	dbsqlc.ListAllProductionsRow
+	Categories []ProductionCategoryInfo `json:"categories"`
 }

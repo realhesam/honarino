@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS productions (
     
     shop_name           VARCHAR(80)  NOT NULL,
     shop_description    TEXT         NOT NULL,
-    categories          TEXT[]       NOT NULL DEFAULT '{}',
     production_address  TEXT         NOT NULL,
     production_phone    VARCHAR(20)  NOT NULL,
     production_email    VARCHAR(255) NOT NULL,

@@ -114,7 +114,6 @@ type Production struct {
 	ShopID            string             `json:"shop_id"`
 	ShopName          string             `json:"shop_name"`
 	ShopDescription   string             `json:"shop_description"`
-	Categories        []string           `json:"categories"`
 	ProductionAddress string             `json:"production_address"`
 	ProductionPhone   string             `json:"production_phone"`
 	ProductionEmail   string             `json:"production_email"`
@@ -130,6 +129,13 @@ type Production struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type ProductionCategory struct {
+	ID           pgtype.UUID        `json:"id"`
+	ProductionID pgtype.UUID        `json:"production_id"`
+	CategoryID   pgtype.UUID        `json:"category_id"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
 type ProductionMember struct {

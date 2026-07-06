@@ -12,7 +12,7 @@ import (
 )
 
 const activateProduction = `-- name: ActivateProduction :execrows
-UPDATE productions 
+UPDATE productions
 SET active = TRUE, updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL
 `
@@ -54,15 +54,15 @@ func (q *Queries) AddProductionMember(ctx context.Context, arg AddProductionMemb
 const countAllProductions = `-- name: CountAllProductions :one
 SELECT COUNT(*)
 FROM productions p
-INNER JOIN production_members pm 
+INNER JOIN production_members pm
     ON pm.production_id = p.id AND pm.role = 'owner'
-INNER JOIN users u 
+INNER JOIN users u
     ON u.id = pm.user_id
 WHERE p.deleted_at IS NULL
   AND ($1::text = '' OR p.shop_name ILIKE '%' || $1 || '%' OR u.name ILIKE '%' || $1 || '%' OR p.production_phone ILIKE '%' || $1 || '%')
   AND (
-    $2::text = 'all' OR $2 = '' 
-    OR ($2 = 'active' AND p.active = TRUE) 
+    $2::text = 'all' OR $2 = ''
+    OR ($2 = 'active' AND p.active = TRUE)
     OR ($2 = 'inactive' AND p.active = FALSE)
   )
 `
@@ -109,21 +109,20 @@ func (q *Queries) CountProductionsByUserID(ctx context.Context, userID pgtype.UU
 const createProduction = `-- name: CreateProduction :one
 INSERT INTO productions (
     shop_id,
-    shop_name, 
-    shop_description, 
-    categories,
-    production_address, 
-    production_phone, 
+    shop_name,
+    shop_description,
+    production_address,
+    production_phone,
     production_email,
-    telegram, 
-    rubika, 
-    eitaa, 
-    whatsapp, 
+    telegram,
+    rubika,
+    eitaa,
+    whatsapp,
     website,
     active
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-RETURNING id, shop_id, shop_name, shop_description, categories,
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+RETURNING id, shop_id, shop_name, shop_description,
           production_address, production_phone, production_email,
           telegram, rubika, eitaa, whatsapp, website,
           logo_url, banner_url, cover_url,
@@ -135,7 +134,6 @@ type CreateProductionParams struct {
 	ShopID            string      `json:"shop_id"`
 	ShopName          string      `json:"shop_name"`
 	ShopDescription   string      `json:"shop_description"`
-	Categories        []string    `json:"categories"`
 	ProductionAddress string      `json:"production_address"`
 	ProductionPhone   string      `json:"production_phone"`
 	ProductionEmail   string      `json:"production_email"`
@@ -152,7 +150,6 @@ func (q *Queries) CreateProduction(ctx context.Context, arg CreateProductionPara
 		arg.ShopID,
 		arg.ShopName,
 		arg.ShopDescription,
-		arg.Categories,
 		arg.ProductionAddress,
 		arg.ProductionPhone,
 		arg.ProductionEmail,
@@ -169,7 +166,6 @@ func (q *Queries) CreateProduction(ctx context.Context, arg CreateProductionPara
 		&i.ShopID,
 		&i.ShopName,
 		&i.ShopDescription,
-		&i.Categories,
 		&i.ProductionAddress,
 		&i.ProductionPhone,
 		&i.ProductionEmail,
@@ -190,7 +186,7 @@ func (q *Queries) CreateProduction(ctx context.Context, arg CreateProductionPara
 }
 
 const deactivateProduction = `-- name: DeactivateProduction :execrows
-UPDATE productions 
+UPDATE productions
 SET active = FALSE, updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL
 `
@@ -224,7 +220,7 @@ func (q *Queries) GetMembersCount(ctx context.Context, productionID pgtype.UUID)
 }
 
 const getProductionByID = `-- name: GetProductionByID :one
-SELECT id, shop_id, shop_name, shop_description, categories,
+SELECT id, shop_id, shop_name, shop_description,
        production_address, production_phone, production_email,
        telegram, rubika, eitaa, whatsapp, website,
        logo_url, banner_url, cover_url,
@@ -242,7 +238,6 @@ func (q *Queries) GetProductionByID(ctx context.Context, id pgtype.UUID) (Produc
 		&i.ShopID,
 		&i.ShopName,
 		&i.ShopDescription,
-		&i.Categories,
 		&i.ProductionAddress,
 		&i.ProductionPhone,
 		&i.ProductionEmail,
@@ -368,8 +363,8 @@ func (q *Queries) HasProductionRole(ctx context.Context, arg HasProductionRolePa
 }
 
 const isProductionActive = `-- name: IsProductionActive :one
-SELECT active 
-FROM productions 
+SELECT active
+FROM productions
 WHERE id = $1 AND deleted_at IS NULL
 `
 
@@ -400,39 +395,38 @@ func (q *Queries) IsProductionMember(ctx context.Context, arg IsProductionMember
 }
 
 const listAllProductions = `-- name: ListAllProductions :many
-SELECT p.id, 
+SELECT p.id,
        p.shop_id,
-       p.shop_name, 
-       p.shop_description, 
-       p.categories,
-       p.production_address, 
-       p.production_phone, 
+       p.shop_name,
+       p.shop_description,
+       p.production_address,
+       p.production_phone,
        p.production_email,
-       p.telegram, 
-       p.rubika, 
-       p.eitaa, 
-       p.whatsapp, 
+       p.telegram,
+       p.rubika,
+       p.eitaa,
+       p.whatsapp,
        p.website,
-       p.logo_url, 
-       p.banner_url, 
+       p.logo_url,
+       p.banner_url,
        p.cover_url,
        p.active,
-       p.created_at, 
+       p.created_at,
        p.updated_at,
        u.id   AS owner_id,
        u.name AS owner_name,
        u.username AS owner_username,
        u.email AS owner_email
 FROM productions p
-INNER JOIN production_members pm 
+INNER JOIN production_members pm
     ON pm.production_id = p.id AND pm.role = 'owner'
-INNER JOIN users u 
+INNER JOIN users u
     ON u.id = pm.user_id
 WHERE p.deleted_at IS NULL
   AND ($3::text = '' OR p.shop_name ILIKE '%' || $3 || '%' OR u.name ILIKE '%' || $3 || '%' OR p.production_phone ILIKE '%' || $3 || '%')
   AND (
-    $4::text = 'all' OR $4 = '' 
-    OR ($4 = 'active' AND p.active = TRUE) 
+    $4::text = 'all' OR $4 = ''
+    OR ($4 = 'active' AND p.active = TRUE)
     OR ($4 = 'inactive' AND p.active = FALSE)
   )
 ORDER BY p.created_at DESC
@@ -451,7 +445,6 @@ type ListAllProductionsRow struct {
 	ShopID            string             `json:"shop_id"`
 	ShopName          string             `json:"shop_name"`
 	ShopDescription   string             `json:"shop_description"`
-	Categories        []string           `json:"categories"`
 	ProductionAddress string             `json:"production_address"`
 	ProductionPhone   string             `json:"production_phone"`
 	ProductionEmail   string             `json:"production_email"`
@@ -491,7 +484,6 @@ func (q *Queries) ListAllProductions(ctx context.Context, arg ListAllProductions
 			&i.ShopID,
 			&i.ShopName,
 			&i.ShopDescription,
-			&i.Categories,
 			&i.ProductionAddress,
 			&i.ProductionPhone,
 			&i.ProductionEmail,
@@ -584,29 +576,28 @@ func (q *Queries) ListProductionMembers(ctx context.Context, arg ListProductionM
 }
 
 const listProductionsByUserID = `-- name: ListProductionsByUserID :many
-SELECT p.id, 
+SELECT p.id,
        p.shop_id,
-       p.shop_name, 
-       p.shop_description, 
-       p.categories,
-       p.production_address, 
-       p.production_phone, 
+       p.shop_name,
+       p.shop_description,
+       p.production_address,
+       p.production_phone,
        p.production_email,
-       p.telegram, 
-       p.rubika, 
-       p.eitaa, 
-       p.whatsapp, 
+       p.telegram,
+       p.rubika,
+       p.eitaa,
+       p.whatsapp,
        p.website,
-       p.logo_url, 
-       p.banner_url, 
+       p.logo_url,
+       p.banner_url,
        p.cover_url,
        p.active,
-       p.created_at, 
+       p.created_at,
        p.updated_at,
        pm.role AS member_role
 FROM productions p
 INNER JOIN production_members pm ON pm.production_id = p.id
-WHERE pm.user_id = $1 
+WHERE pm.user_id = $1
   AND p.deleted_at IS NULL
 ORDER BY p.created_at DESC
 LIMIT $2 OFFSET $3
@@ -623,7 +614,6 @@ type ListProductionsByUserIDRow struct {
 	ShopID            string               `json:"shop_id"`
 	ShopName          string               `json:"shop_name"`
 	ShopDescription   string               `json:"shop_description"`
-	Categories        []string             `json:"categories"`
 	ProductionAddress string               `json:"production_address"`
 	ProductionPhone   string               `json:"production_phone"`
 	ProductionEmail   string               `json:"production_email"`
@@ -655,7 +645,6 @@ func (q *Queries) ListProductionsByUserID(ctx context.Context, arg ListProductio
 			&i.ShopID,
 			&i.ShopName,
 			&i.ShopDescription,
-			&i.Categories,
 			&i.ProductionAddress,
 			&i.ProductionPhone,
 			&i.ProductionEmail,
@@ -771,18 +760,17 @@ UPDATE productions SET
     shop_id            = coalesce($1,            shop_id),
     shop_name          = coalesce($2,          shop_name),
     shop_description   = coalesce($3,   shop_description),
-    categories         = coalesce($4,         categories),
-    production_address = coalesce($5, production_address),
-    production_phone   = coalesce($6,   production_phone),
-    production_email   = coalesce($7,   production_email),
-    telegram           = coalesce($8,           telegram),
-    rubika             = coalesce($9,             rubika),
-    eitaa              = coalesce($10,              eitaa),
-    whatsapp           = coalesce($11,           whatsapp),
-    website            = coalesce($12,            website),
+    production_address = coalesce($4, production_address),
+    production_phone   = coalesce($5,   production_phone),
+    production_email   = coalesce($6,   production_email),
+    telegram           = coalesce($7,           telegram),
+    rubika             = coalesce($8,             rubika),
+    eitaa              = coalesce($9,              eitaa),
+    whatsapp           = coalesce($10,           whatsapp),
+    website            = coalesce($11,            website),
     updated_at         = NOW()
-WHERE id = $13 AND deleted_at IS NULL
-RETURNING id, shop_id, shop_name, shop_description, categories,
+WHERE id = $12 AND deleted_at IS NULL
+RETURNING id, shop_id, shop_name, shop_description,
           production_address, production_phone, production_email,
           telegram, rubika, eitaa, whatsapp, website,
           logo_url, banner_url, cover_url,
@@ -793,7 +781,6 @@ type UpdateProductionParams struct {
 	ShopID            pgtype.Text `json:"shop_id"`
 	ShopName          pgtype.Text `json:"shop_name"`
 	ShopDescription   pgtype.Text `json:"shop_description"`
-	Categories        []string    `json:"categories"`
 	ProductionAddress pgtype.Text `json:"production_address"`
 	ProductionPhone   pgtype.Text `json:"production_phone"`
 	ProductionEmail   pgtype.Text `json:"production_email"`
@@ -810,7 +797,6 @@ type UpdateProductionRow struct {
 	ShopID            string             `json:"shop_id"`
 	ShopName          string             `json:"shop_name"`
 	ShopDescription   string             `json:"shop_description"`
-	Categories        []string           `json:"categories"`
 	ProductionAddress string             `json:"production_address"`
 	ProductionPhone   string             `json:"production_phone"`
 	ProductionEmail   string             `json:"production_email"`
@@ -832,7 +818,6 @@ func (q *Queries) UpdateProduction(ctx context.Context, arg UpdateProductionPara
 		arg.ShopID,
 		arg.ShopName,
 		arg.ShopDescription,
-		arg.Categories,
 		arg.ProductionAddress,
 		arg.ProductionPhone,
 		arg.ProductionEmail,
@@ -849,7 +834,6 @@ func (q *Queries) UpdateProduction(ctx context.Context, arg UpdateProductionPara
 		&i.ShopID,
 		&i.ShopName,
 		&i.ShopDescription,
-		&i.Categories,
 		&i.ProductionAddress,
 		&i.ProductionPhone,
 		&i.ProductionEmail,
