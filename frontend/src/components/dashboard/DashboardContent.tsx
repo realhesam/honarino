@@ -34,12 +34,12 @@ const userLinks: NavLink[] = [
   {
     icon: <HiHeart />,
     label: "تولیدی های محبوب",
-    href: "/dashboard/user/favorites",
+    href: "/dashboard/favorites",
   },
   {
     icon: <HiChatAlt2 />,
     label: "پرسش و پاسخ",
-    href: "/dashboard/user/queries",
+    href: "/dashboard/queries",
   },
 ];
 
@@ -88,7 +88,6 @@ export default function DashboardContent({
 }) {
   const { user, isLoading } = useUser();
   const pathname = usePathname();
-  const router = useRouter();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   if (isLoading || !user) {

@@ -1,32 +1,35 @@
 import LinkButton from "@/ui/LinkButton";
-import Link from "next/link";
 import { HiChevronLeft } from "react-icons/hi2";
+
+type PropsType = {
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  title: string;
+  caption?: string;
+  viewMoreLink?: string;
+  withBg?: string;
+  textColor?: string;
+  smallSize?: boolean;
+  id?: string;
+};
 
 function Section({
   children,
   icon,
   title,
   caption,
-  hasViewMore = true,
+  viewMoreLink,
   withBg,
   textColor,
+  smallSize = false,
   id,
-}: Readonly<{
-  children: React.ReactNode;
-  icon?: React.ReactNode;
-  title: string;
-  caption?: string;
-  hasViewMore?: boolean;
-  withBg?: string;
-  textColor?: string;
-  id?: string;
-}>) {
+}: Readonly<PropsType>) {
   return (
     <section
-      className={`mt-16 ${withBg} ${withBg && "pt-5 pb-10"}`}
+      className={`${smallSize ? "mt-8" : "mt-16"} ${withBg} ${withBg && "pt-5 pb-10"}`}
       id={`${id || ""}`}
     >
-      <div className="container">
+      <div className={`${smallSize ? "" : "container"}`}>
         <div className="flex items-center justify-between border-b border-stone-500/20 mb-5">
           <div className="flex flex-col">
             <div
@@ -34,8 +37,12 @@ function Section({
                 withBg ? "text-white" : "text-primary"
               }`}
             >
-              <span className="*:size-7 md:*:size-10">{icon}</span>
-              <h2 className="">{title}</h2>
+              <span
+                className={`${smallSize ? "*:size-7" : "*:size-7 md:*:size-10"}`}
+              >
+                {icon}
+              </span>
+              <h2 className={`${smallSize ? "text-lg" : ""}`}>{title}</h2>
             </div>
             <h3
               className={`text-sm md:text-lg my-1 ${
@@ -45,9 +52,9 @@ function Section({
               {caption}
             </h3>
           </div>
-          {hasViewMore && (
+          {viewMoreLink && (
             <LinkButton
-              href="/readmore"
+              href={viewMoreLink}
               variation={withBg ? "btn-light" : "btn-primary"}
             >
               <span className={textColor}>مشاهده بیشتر</span>
