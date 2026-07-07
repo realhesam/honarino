@@ -2,11 +2,14 @@
 
 import ProductList from "@/components/product/ProductList";
 import InputRow from "@/ui/InputRow";
+import LinkButton from "@/ui/LinkButton";
+import Modal from "@/ui/Modal";
 import Pagination from "@/ui/Pagination";
 import { useState } from "react";
 import { FiSliders, FiRefreshCw, FiInbox } from "react-icons/fi";
 import {
   HiAdjustmentsHorizontal,
+  HiCube,
   HiMapPin,
   HiMiniMagnifyingGlass,
   HiMiniSquares2X2,
@@ -50,7 +53,7 @@ const products = Array.from({ length: 10 }, (_, i) => {
   };
 });
 
-export default function ProductsPage() {
+function ProductsHeader() {
   const [selectedCity, setSelectedCity] = useState("همه");
   const [selectedCategory, setSelectedCategory] = useState("همه");
   const [sortBy, setSortBy] = useState("newest");
@@ -71,108 +74,123 @@ export default function ProductsPage() {
     setMaxPrice("");
     setSearchTerm("");
   };
-
   return (
-    <div className="container mt-28">
-      <div className="mb-4 rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
-        <InputRow icon={<HiMiniMagnifyingGlass />} dir="rtl" customClass="mb-3">
+    <div className="mb-4 rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
+      <InputRow icon={<HiMiniMagnifyingGlass />} dir="rtl" customClass="mb-3">
+        <input
+          type="text"
+          className="input"
+          placeholder="نام محصول مورد نظر خود را وارد کنید"
+        />
+      </InputRow>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <InputRow icon={<HiMapPin />} dir="rtl">
+          <select
+            value={selectedCity}
+            onChange={(e) => setSelectedCity(e.target.value)}
+            className="input"
+          >
+            <option value="همه">همه شهرها</option>
+            {cities.map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
+          </select>
+        </InputRow>
+
+        <InputRow icon={<HiMiniSquares2X2 />} dir="rtl">
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="input"
+          >
+            <option value="همه">همه دسته‌ها</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </InputRow>
+
+        <InputRow icon={<HiMiniTag />} dir="rtl">
           <input
             type="text"
-            className="input"
-            placeholder="نام محصول مورد نظر خود را وارد کنید"
+            min={0}
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            placeholder="بدون محدودیت"
+            className="input h-11"
           />
         </InputRow>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <InputRow icon={<HiMapPin />} dir="rtl">
-            <select
-              value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
-              className="input"
-            >
-              <option value="همه">همه شهرها</option>
-              {cities.map((city) => (
-                <option key={city} value={city}>
-                  {city}
-                </option>
-              ))}
-            </select>
-          </InputRow>
 
-          <InputRow icon={<HiMiniSquares2X2 />} dir="rtl">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="input"
-            >
-              <option value="همه">همه دسته‌ها</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-          </InputRow>
-
-          <InputRow icon={<HiMiniTag />} dir="rtl">
-            <input
-              type="text"
-              min={0}
-              value={maxPrice}
-              onChange={(e) => setMaxPrice(e.target.value)}
-              placeholder="بدون محدودیت"
-              className="input h-11"
-            />
-          </InputRow>
-
-          <InputRow icon={<HiAdjustmentsHorizontal />} dir="rtl">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="input"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </InputRow>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-2">
-          <div className="flex items-center gap-1.5 text-sm text-gray-500">
-            <FiSliders className="h-4 w-4" />
-            <span>
-              {29} محصول یافت شد
-              {activeFilterCount > 0 && ` · ${activeFilterCount} فیلتر فعال`}
-            </span>
-          </div>
-          <button
-            onClick={resetFilters}
-            className="flex items-center gap-1.5 text-sm text-emerald-600 hover:text-emerald-700"
+        <InputRow icon={<HiAdjustmentsHorizontal />} dir="rtl">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="input"
           >
-            <FiRefreshCw className="h-3.5 w-3.5" />
-            پاک کردن فیلترها
-          </button>
-        </div>
+            {sortOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </InputRow>
       </div>
 
+      <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-2">
+        <div className="flex flex-col sm:flex-row items-center gap-1.5 text-xs sm:text-sm text-gray-500">
+          <FiSliders className="h-4 w-4" />
+          <span>
+            {29} محصول یافت شد
+            {activeFilterCount > 0 && ` · ${activeFilterCount} فیلتر فعال`}
+          </span>
+        </div>
+        <button
+          onClick={resetFilters}
+          className="flex flex-col sm:flex-row items-center gap-1.5 text-xs sm:text-sm text-emerald-600 hover:text-emerald-700"
+        >
+          <FiRefreshCw className="h-3.5 w-3.5" />
+          پاک کردن فیلترها
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <div className="container mt-28">
+      <div className="hidden lg:block">
+        <ProductsHeader />
+      </div>
+      <div className="mb-3 flex items-center justify-between lg:hidden">
+        <h3 className="text-xl font-medium">
+          <span className="*:size-6 text-stone-400">
+            <HiCube />
+          </span>
+          <span className="text-stone-600">صفحه محصولات</span>
+        </h3>
+        <Modal>
+          <Modal.Open name="products-header">
+            <LinkButton>مشاهده فیلتر ها</LinkButton>
+          </Modal.Open>
+          <Modal.Window name="products-header">
+            <ProductsHeader />
+          </Modal.Window>
+        </Modal>
+      </div>
       {products.length === 0 ? (
         <div className="flex flex-col items-center rounded-2xl border border-dashed border-gray-300 bg-white py-16 text-center">
           <FiInbox className="mb-3 h-10 w-10 text-gray-300" />
-          <p className="text-gray-500">محصولی با این فیلترها پیدا نشد</p>
-          <button
-            onClick={resetFilters}
-            className="mt-4 flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white hover:bg-emerald-700"
-          >
-            <FiRefreshCw className="h-3.5 w-3.5" />
-            پاک کردن فیلترها
-          </button>
+          <p className="text-gray-500">محصولی پیدا نشد</p>
         </div>
       ) : (
         <ProductList products={products} />
       )}
-      <Pagination totalItems={products.length} pageSize={10} />
+      <Pagination totalItems={products.length + 10} pageSize={5} />
     </div>
   );
 }
