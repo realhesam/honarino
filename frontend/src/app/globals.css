@@ -40,6 +40,16 @@
     @apply px-2.5 mx-auto xl:max-w-[1480px] sm:px-5;
   }
 
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+
+  input[type="number"] {
+    appearance: textfield !important;
+    -moz-appearance: textfield !important;
+  }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }

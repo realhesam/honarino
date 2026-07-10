@@ -131,7 +131,7 @@ export default function Sidebar({ links }: { links: NavLink[] }) {
           })()}
         </nav>
 
-        <div className="p-4 border-t border-stone-200/60 shrink-0 bg-gradient-to-t from-white to-transparent lg:from-stone-50/50">
+        <div className="p-4 border-t border-stone-200/60 shrink-0 bg-linear-to-t from-white to-transparent lg:from-stone-50/50">
           <LinkButton
             href="/auth/logout"
             variation="btn-dim"
