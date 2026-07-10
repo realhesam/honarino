@@ -31,6 +31,7 @@ import {
 const userLinks: NavLink[] = [
   { icon: <HiHome />, label: "داشبورد", href: "/dashboard/" },
   { icon: <HiUser />, label: "حساب کاربری", href: "/dashboard/account" },
+  /*
   {
     icon: <HiHeart />,
     label: "تولیدی های محبوب",
@@ -40,7 +41,7 @@ const userLinks: NavLink[] = [
     icon: <HiChatAlt2 />,
     label: "پرسش و پاسخ",
     href: "/dashboard/user/queries",
-  },
+  },*/
 ];
 
 const vendorBaseLinks: NavLink[] = [
@@ -73,12 +74,12 @@ const adminPanelLinks: NavLink[] = [
     icon: <HiBadgeCheck />,
     label: "درخواست ارتقا حساب",
     href: "/dashboard/admin/production-requests",
-  },
+  },/*
   {
     icon: <HiTicket />,
     label: "تیکت های دریافتی",
     href: "/dashboard/admin/tickets",
-  },
+  },*/
 ];
 
 export default function DashboardContent({
@@ -135,16 +136,11 @@ export default function DashboardContent({
         label: "محصولات تولیدی",
         href: `/dashboard/vendor/${productionId}/products`,
       },
-      {
-        icon: <HiViewGridAdd />,
-        label: "افزودن محصول جدید",
-        href: `/dashboard/vendor/${productionId}/add-product`,
-      },
-      {
+      /*{
         icon: <HiTicket />,
         label: "تیکت های دریافتی",
         href: `/dashboard/vendor/${productionId}/tickets`,
-      },
+      },*/
     ];
   } else if (isAdminPage && user.role === "admin") {
     currentLinks = [...adminPanelLinks];
