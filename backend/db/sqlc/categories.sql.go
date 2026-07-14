@@ -134,6 +134,49 @@ func (q *Queries) DeactivateCategory(ctx context.Context, id pgtype.UUID) (int64
 	return result.RowsAffected(), nil
 }
 
+const getCategoriesByIDs = `-- name: GetCategoriesByIDs :many
+SELECT id, parent_id, name, slug, description, active
+FROM categories
+WHERE id = ANY($1::uuid[])
+  AND deleted_at IS NULL
+`
+
+type GetCategoriesByIDsRow struct {
+	ID          pgtype.UUID `json:"id"`
+	ParentID    pgtype.UUID `json:"parent_id"`
+	Name        string      `json:"name"`
+	Slug        string      `json:"slug"`
+	Description pgtype.Text `json:"description"`
+	Active      bool        `json:"active"`
+}
+
+func (q *Queries) GetCategoriesByIDs(ctx context.Context, ids []pgtype.UUID) ([]GetCategoriesByIDsRow, error) {
+	rows, err := q.db.Query(ctx, getCategoriesByIDs, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCategoriesByIDsRow
+	for rows.Next() {
+		var i GetCategoriesByIDsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ParentID,
+			&i.Name,
+			&i.Slug,
+			&i.Description,
+			&i.Active,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCategoryAncestors = `-- name: GetCategoryAncestors :many
 WITH RECURSIVE ancestors AS (
     SELECT

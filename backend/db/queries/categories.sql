@@ -225,3 +225,9 @@ WHERE parent_id IS NULL
   AND deleted_at IS NULL
   AND lower(name) = lower($1)
 LIMIT 1;
+
+-- name: GetCategoriesByIDs :many
+SELECT id, parent_id, name, slug, description, active
+FROM categories
+WHERE id = ANY(sqlc.arg(ids)::uuid[])
+  AND deleted_at IS NULL;

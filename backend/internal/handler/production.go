@@ -132,6 +132,15 @@ func (h *ProductionHandler) GetProduction(c *fiber.Ctx) error {
 	return c.JSON(production)
 }
 
+func (h *ProductionHandler) GetPublicProduction(c *fiber.Ctx) error {
+	production, err := h.svc.GetPublicProduction(c.Context(), c.Params("id"))
+	if err != nil {
+		return handleError(c, err, "internal server error")
+	}
+
+	return c.JSON(production)
+}
+
 func (h *ProductionHandler) UpdateProduction(c *fiber.Ctx) error {
 	var req model.UpdateProductionRequest
 	if err := c.BodyParser(&req); err != nil {

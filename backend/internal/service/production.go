@@ -932,3 +932,23 @@ func (s *ProductionService) GetMembersCount(ctx context.Context, userID, product
 		AdminTotal:  int(counts.AdminTotal),
 	}, nil
 }
+
+func (s *ProductionService) GetPublicProduction(ctx context.Context, productionID string) (*model.ProductionWithCategories, error) {
+	production, err := s.queries.GetProductionBySlug(ctx, productionID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrProductionNotFound
+		}
+		return nil, err
+	}
+
+	categoryRows, err := s.queries.ListProductionCategories(ctx, production.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.ProductionWithCategories{
+		Production: production,
+		Categories: toProductionCategoryInfo(categoryRows),
+	}, nil
+}

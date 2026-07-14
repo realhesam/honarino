@@ -257,6 +257,44 @@ func (q *Queries) GetProductionByID(ctx context.Context, id pgtype.UUID) (Produc
 	return i, err
 }
 
+const getProductionBySlug = `-- name: GetProductionBySlug :one
+SELECT id, shop_id, shop_name, shop_description,
+       production_address, production_phone, production_email,
+       telegram, rubika, eitaa, whatsapp, website,
+       logo_url, banner_url, cover_url,
+       active,
+       created_at, updated_at, deleted_at
+FROM productions
+WHERE shop_id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) GetProductionBySlug(ctx context.Context, shopID string) (Production, error) {
+	row := q.db.QueryRow(ctx, getProductionBySlug, shopID)
+	var i Production
+	err := row.Scan(
+		&i.ID,
+		&i.ShopID,
+		&i.ShopName,
+		&i.ShopDescription,
+		&i.ProductionAddress,
+		&i.ProductionPhone,
+		&i.ProductionEmail,
+		&i.Telegram,
+		&i.Rubika,
+		&i.Eitaa,
+		&i.Whatsapp,
+		&i.Website,
+		&i.LogoUrl,
+		&i.BannerUrl,
+		&i.CoverUrl,
+		&i.Active,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const getProductionMember = `-- name: GetProductionMember :one
 SELECT id, production_id, user_id, role, created_at, updated_at
 FROM production_members

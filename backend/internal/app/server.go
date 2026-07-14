@@ -25,7 +25,8 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, rdb *cache.Redis, queries *
 	profileSvc := service.NewProfileService(queries, rdb)
 	vendorSvc := service.NewVendorService(queries)
 	productionSvc := service.NewProductionService(queries, db)
-	categorySvc := service.NewCategoryService(queries) // اضافه شد
+	categorySvc := service.NewCategoryService(queries)
+	productSvc := service.NewProductService(queries)
 
 	var minioClient *storage.MinioClient
 	if cfg.MinioEndpoint != "" {
@@ -50,7 +51,8 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, rdb *cache.Redis, queries *
 	profileHdl := handler.NewProfileHandler(profileSvc, minioClient)
 	vendorHdl := handler.NewVendorHandler(vendorSvc)
 	productionHdl := handler.NewProductionHandler(productionSvc, minioClient)
-	categoryHdl := handler.NewCategoryHandler(categorySvc) // اضافه شد
+	categoryHdl := handler.NewCategoryHandler(categorySvc)
+	productHdl := handler.NewProductHandler(productSvc, minioClient)
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -69,7 +71,7 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, rdb *cache.Redis, queries *
 		AllowHeaders: "Origin, Content-Type, Authorization",
 	}))
 
-	registerRoutes(app, cfg, db, rdb, authHdl, profileHdl, vendorHdl, productionHdl, categoryHdl)
+	registerRoutes(app, cfg, db, rdb, authHdl, profileHdl, vendorHdl, productionHdl, categoryHdl, productHdl)
 	return app
 }
 
@@ -79,6 +81,7 @@ func registerRoutes(app *fiber.App, cfg *config.Config, db *pgxpool.Pool, rdb *c
 	vendorHdl *handler.VendorHandler,
 	productionHdl *handler.ProductionHandler,
 	categoryHdl *handler.CategoryHandler,
+	productHdl *handler.ProductHandler,
 ) {
 	api := app.Group("/api/v1")
 
@@ -106,6 +109,9 @@ func registerRoutes(app *fiber.App, cfg *config.Config, db *pgxpool.Pool, rdb *c
 	admin.Get("/vendor/requests", vendorHdl.ListRequests)
 	admin.Delete("/vendor/requests/:id", vendorHdl.DeleteRequest)
 	admin.Patch("/vendor/requests/:id/approve", vendorHdl.ApproveRequest)
+
+	publicProductions := api.Group("/productions")
+	publicProductions.Get("/:id/get", productionHdl.GetPublicProduction)
 
 	productions := api.Group("/productions", protected, middleware.RequireRole("vendor", "admin"))
 	productions.Post("/", productionHdl.CreateProduction)
@@ -142,6 +148,26 @@ func registerRoutes(app *fiber.App, cfg *config.Config, db *pgxpool.Pool, rdb *c
 	categoriesAdmin.Delete("/:id", categoryHdl.DeleteCategory)
 	categoriesAdmin.Post("/:id/activate", categoryHdl.ActivateCategory)
 	categoriesAdmin.Post("/:id/deactivate", categoryHdl.DeactivateCategory)
+
+	products := api.Group("/products")
+	products.Get("/", productHdl.ListActiveProducts)
+	products.Get("/:id", productHdl.GetProduct)
+	products.Get("/shop/:shopID/slug/:slug", productHdl.GetProductBySlug)
+	products.Get("/shop/:shopID", productHdl.ListActiveProductsByShop)
+
+	shopProducts := api.Group("/productions/:id/products", protected, middleware.RequireRole("vendor", "admin"))
+	shopProducts.Post("/", productHdl.CreateProduct)
+	shopProducts.Get("/", productHdl.ListShopProducts)
+	shopProducts.Patch("/:productID", productHdl.UpdateProduct)
+	shopProducts.Delete("/:productID", productHdl.DeleteProduct)
+	shopProducts.Post("/:productID/activate", productHdl.ActivateProduct)
+	shopProducts.Post("/:productID/deactivate", productHdl.DeactivateProduct)
+	shopProducts.Post("/:productID/media", productHdl.AddProductMedia)
+	shopProducts.Post("/:productID/media/upload-url", productHdl.GetProductMediaUploadURL)
+	shopProducts.Delete("/:productID/media/:mediaID", productHdl.DeleteProductMedia)
+
+	productsAdmin := api.Group("/admin/products", protected, middleware.RequireRole("admin"))
+	productsAdmin.Get("/", productHdl.ListAllProductsAdmin)
 
 	app.Get("/health", func(c *fiber.Ctx) error {
 		if err := db.Ping(c.Context()); err != nil {

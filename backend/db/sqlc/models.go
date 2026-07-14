@@ -11,6 +11,91 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type ProductMediaType string
+
+const (
+	ProductMediaTypeImage ProductMediaType = "image"
+	ProductMediaTypeVideo ProductMediaType = "video"
+	ProductMediaType360   ProductMediaType = "360"
+)
+
+func (e *ProductMediaType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ProductMediaType(s)
+	case string:
+		*e = ProductMediaType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ProductMediaType: %T", src)
+	}
+	return nil
+}
+
+type NullProductMediaType struct {
+	ProductMediaType ProductMediaType `json:"product_media_type"`
+	Valid            bool             `json:"valid"` // Valid is true if ProductMediaType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullProductMediaType) Scan(value interface{}) error {
+	if value == nil {
+		ns.ProductMediaType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ProductMediaType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullProductMediaType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ProductMediaType), nil
+}
+
+type ProductStatus string
+
+const (
+	ProductStatusActive   ProductStatus = "active"
+	ProductStatusInactive ProductStatus = "inactive"
+)
+
+func (e *ProductStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ProductStatus(s)
+	case string:
+		*e = ProductStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ProductStatus: %T", src)
+	}
+	return nil
+}
+
+type NullProductStatus struct {
+	ProductStatus ProductStatus `json:"product_status"`
+	Valid         bool          `json:"valid"` // Valid is true if ProductStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullProductStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.ProductStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ProductStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullProductStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ProductStatus), nil
+}
+
 type ProductionMemberRole string
 
 const (
@@ -107,6 +192,44 @@ type Category struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type Product struct {
+	ID                 pgtype.UUID        `json:"id"`
+	ShopID             pgtype.UUID        `json:"shop_id"`
+	Title              string             `json:"title"`
+	Slug               string             `json:"slug"`
+	Description        string             `json:"description"`
+	FromPrice          pgtype.Numeric     `json:"from_price"`
+	ToPrice            pgtype.Numeric     `json:"to_price"`
+	IsPriceHidden      bool               `json:"is_price_hidden"`
+	Material           pgtype.Text        `json:"material"`
+	Style              pgtype.Text        `json:"style"`
+	Dimensions         pgtype.Text        `json:"dimensions"`
+	ProductionTimeDays pgtype.Int4        `json:"production_time_days"`
+	IsCustomizable     bool               `json:"is_customizable"`
+	Status             ProductStatus      `json:"status"`
+	ViewsCount         int32              `json:"views_count"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type ProductCategory struct {
+	ID         pgtype.UUID        `json:"id"`
+	ProductID  pgtype.UUID        `json:"product_id"`
+	CategoryID pgtype.UUID        `json:"category_id"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
+type ProductMedium struct {
+	ID        pgtype.UUID        `json:"id"`
+	ProductID pgtype.UUID        `json:"product_id"`
+	Type      ProductMediaType   `json:"type"`
+	Url       string             `json:"url"`
+	SortOrder int32              `json:"sort_order"`
+	AltText   pgtype.Text        `json:"alt_text"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 type Production struct {

@@ -244,3 +244,13 @@ SELECT
     COUNT(*) FILTER (WHERE role = 'admin') AS "AdminTotal"
 FROM production_members
 WHERE production_id = $1;
+
+-- name: GetProductionBySlug :one
+SELECT id, shop_id, shop_name, shop_description,
+       production_address, production_phone, production_email,
+       telegram, rubika, eitaa, whatsapp, website,
+       logo_url, banner_url, cover_url,
+       active,
+       created_at, updated_at, deleted_at
+FROM productions
+WHERE shop_id = $1 AND deleted_at IS NULL;
