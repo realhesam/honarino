@@ -35,7 +35,6 @@ function EditProductForm({
   return (
     <div className="max-w-7xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Pane - Product List */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl border border-stone-200 shadow-sm">
             <div className="p-4 border-b border-stone-200">
@@ -64,7 +63,6 @@ function EditProductForm({
           </div>
         </div>
 
-        {/* Right Pane - Product Details/Form */}
         <div className="lg:col-span-2">
           <div className="px-6">
             {selectedProduct ? (

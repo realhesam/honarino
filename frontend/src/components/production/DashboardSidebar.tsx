@@ -99,7 +99,6 @@ function DashboardSidebar({ activeTab, onTabChange }: DashboardSidebarProps) {
 
   return (
     <>
-      {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileOpen(true)}
         className="md:hidden fixed top-5 left-4 z-40 p-2 bg-white rounded-lg shadow-lg border border-stone-200 *:size-6 text-stone-600"
@@ -107,7 +106,6 @@ function DashboardSidebar({ activeTab, onTabChange }: DashboardSidebarProps) {
         <HiBars3 />
       </button>
 
-      {/* Desktop Sidebar */}
       <div className="hidden relative md:block w-20 shrink-0">
         <SidebarContent
           activeTab={activeTab}
@@ -116,7 +114,6 @@ function DashboardSidebar({ activeTab, onTabChange }: DashboardSidebarProps) {
         />
       </div>
 
-      {/* Mobile Sidebar */}
       {mounted &&
         createPortal(
           <>

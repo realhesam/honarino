@@ -42,6 +42,9 @@ export const ProductionAPI = {
     getById(id: string) {
         return httpClient.get<Production>(`${BASE_URL}/${id}`);
     },
+    publicGetById(id: string) {
+        return httpClient.get<Production>(`${BASE_URL}/${id}/get`);
+    },
     update(id: string, data: UpdateProductionRequest) {
         return httpClient.patch<Production>(`${BASE_URL}/${id}`, data);
     },

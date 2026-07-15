@@ -216,7 +216,6 @@ export default function ProductionRequestsPage() {
 
   return (
     <div className="h-[calc(100vh-110px)] flex flex-col space-y-5 antialiased min-h-0 animate-in fade-in duration-300">
-      {/* هدر صفحه */}
       <div className="border-b border-stone-200/60 pb-4 shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-stone-900">
@@ -231,7 +230,6 @@ export default function ProductionRequestsPage() {
           </p>
         </div>
 
-        {/* باکس سرچ متصل به استیت لایو */}
         <div className="relative w-full sm:w-72 shrink-0">
           <HiMagnifyingGlass className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-stone-400" />
           <input
@@ -244,7 +242,6 @@ export default function ProductionRequestsPage() {
         </div>
       </div>
 
-      {/* بخش جدول */}
       <div className="flex-1 flex flex-col min-h-0">
         <DataList
           data={requests}
@@ -269,7 +266,6 @@ export default function ProductionRequestsPage() {
         />
       </div>
 
-      {/* مودال جزئیات */}
       {selectedRequest && (
         <DetailModal
           icon={<HiClock className="size-5 text-emerald-600" />}

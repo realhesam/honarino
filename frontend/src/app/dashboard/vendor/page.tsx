@@ -68,7 +68,6 @@ export default function VendorOverviewPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
-      {/* هدر */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-stone-200/60 pb-6">
         <div>
           <h2 className="text-xl font-black text-stone-900 tracking-tight">
@@ -188,7 +187,7 @@ export default function VendorOverviewPage() {
                   <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-stone-100/80 text-stone-600 text-xs">
                     <span className="inline-flex items-center gap-1 bg-stone-50 px-2.5 py-1.5 rounded-lg border border-stone-200/40">
                       <HiFolder className="size-3.5 text-stone-400" />
-                      {prod.categories?.join("، ") || "بدون دسته‌بندی"}
+                      {prod.categories?.map((cat: any) => cat?.name?.trim()).filter(Boolean).join("، ") || "بدون رسته"}
                     </span>
                     <span className="inline-flex items-center gap-1 bg-stone-50 px-2.5 py-1.5 rounded-lg border border-stone-200/40">
                       <HiMapPin className="size-3.5 text-stone-400" />

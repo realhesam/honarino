@@ -45,7 +45,6 @@ function CustomContentForm({ initialItems = [] }: CustomContentFormProps) {
         )}
       </div>
 
-      {/* Add New Item Form */}
       {isAdding && (
         <div className="p-5 bg-stone-50 rounded-xl border-2 border-dashed border-primary/30">
           <div className="space-y-4">
@@ -99,7 +98,6 @@ function CustomContentForm({ initialItems = [] }: CustomContentFormProps) {
         </div>
       )}
 
-      {/* Items List */}
       {items.length === 0 ? (
         <div className="text-center py-6 text-stone-500">
           <p className="text-sm">هیچ محتوای سفارشی اضافه نشده است</p>
@@ -136,7 +134,6 @@ function CustomContentForm({ initialItems = [] }: CustomContentFormProps) {
         </div>
       )}
 
-      {/* JSON Preview (for debugging) */}
       {items.length > 0 && (
         <details className="bg-stone-50 rounded-lg p-3 border border-stone-200">
           <summary className="text-sm font-medium text-stone-600 cursor-pointer">

@@ -74,7 +74,6 @@ function ProductManagementList({
               }`}
             >
               <div className="flex gap-3">
-                {/* Product Image */}
                 <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                   <Image
                     src={product.cover}
@@ -84,7 +83,6 @@ function ProductManagementList({
                   />
                 </div>
 
-                {/* Product Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex-1 min-w-0">
@@ -119,7 +117,6 @@ function ProductManagementList({
   );
 }
 
-// Inline edit form component
 function ProductEditForm({
   product,
   onCancel,

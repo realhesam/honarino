@@ -87,11 +87,16 @@ export default function MainPage() {
   const shopDescription =
     productionData.shop_description ||
     `مدیریت شناسنامه کالاها، انبارداری و کاتالوگ اختصاصی مجموعه ${shopName}.`;
-  const categories = productionData.categories?.join("، ") || "تعیین نشده";
+
+  const categories =
+    productionData.categories
+      ?.map((cat: any) => cat?.name?.trim())
+      .filter(Boolean)
+      .join("، ") || "بدون رسته";
   const address = productionData.production_address || "آدرسی ثبت نشده است";
 
   const totalProducts = productionData.total_products || 0;
-  const categoriesCount = productionData.categories?.length || 0;
+  const categoriesCount = 0;
   const unreadTicketsCount = productionData.unread_tickets_count || 0;
 
   const logoUrl = productionData.logo_url;
@@ -194,7 +199,10 @@ export default function MainPage() {
               onClick={() => navigateTo("products/new")}
               className="group bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl p-6 flex flex-col justify-between min-h-[140px] shadow-sm shadow-emerald-600/10 hover:shadow-lg hover:shadow-emerald-600/10 transition-all cursor-pointer"
             >
-              <div className="size-10 rounded-xl bg-white/15 border border-white/10 flex items-center justify-center w-fit shadow-inner">
+              <div
+                className="size-10 rounded-xl bg-white/15 border border-white/10 flex items-center justify-center w-fit shadow-inner"
+                style={{ padding: "8px" }}
+              >
                 <HiPlus className="size-5 stroke-[2.5]" />
               </div>
               <div className="mt-4">

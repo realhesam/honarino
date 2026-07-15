@@ -84,15 +84,18 @@ export default function AdminProductionsPage() {
     setOffset(0);
   };
 
-  const handleUpdateStatus = async (productionId: string, nextStatus: boolean) => {
+  const handleUpdateStatus = async (
+    productionId: string,
+    nextStatus: boolean,
+  ) => {
     try {
       setIsActionLoading(productionId);
       await ProductionService.toggleActivate(productionId, nextStatus);
 
       setProductions((prev) =>
         prev.map((prod) =>
-          prod.id === productionId ? { ...prod, active: nextStatus } : prod
-        )
+          prod.id === productionId ? { ...prod, active: nextStatus } : prod,
+        ),
       );
 
       if (selectedProd && selectedProd.id === productionId) {
@@ -129,7 +132,8 @@ export default function AdminProductionsPage() {
     }
   };
 
-  const goToProducts = (id: string) => router.push(`/dashboard/vendor/${id}/products`);
+  const goToProducts = (id: string) =>
+    router.push(`/dashboard/vendor/${id}/products`);
 
   const currentPage = Math.floor(offset / LIMIT) + 1;
   const totalPages = Math.max(1, Math.ceil(totalCount / LIMIT));
@@ -149,10 +153,18 @@ export default function AdminProductionsPage() {
               unoptimized
             />
           </div>
+
           <div>
             <div className="font-bold text-stone-800">{prod.shop_name}</div>
-            <div className="text-[10px] text-stone-400 font-mono mt-0.5 truncate max-w-[180px]" dir="ltr">
-              {prod.categories?.join("، ") || "بدون رسته"}
+
+            <div
+              className="text-[10px] text-stone-400 font-mono mt-0.5 truncate max-w-[180px]"
+              dir="rtl"
+            >
+              {prod.categories
+                ?.map((cat: any) => cat?.name?.trim())
+                .filter(Boolean)
+                .join("، ") || "بدون رسته"}
             </div>
           </div>
         </div>
@@ -161,12 +173,20 @@ export default function AdminProductionsPage() {
     {
       key: "owner",
       header: "مالک کارگاه",
-      render: (prod) => <span className="font-bold text-stone-600">{prod.owner_name || "—"}</span>,
+      render: (prod) => (
+        <span className="font-bold text-stone-600">
+          {prod.owner_name || "—"}
+        </span>
+      ),
     },
     {
       key: "phone",
       header: "شماره تماس",
-      render: (prod) => <span className="font-mono text-stone-600" dir="ltr">{prod.production_phone || "—"}</span>,
+      render: (prod) => (
+        <span className="font-mono text-stone-600" dir="ltr">
+          {prod.production_phone || "—"}
+        </span>
+      ),
     },
     {
       key: "status",
@@ -241,7 +261,9 @@ export default function AdminProductionsPage() {
             />
           </div>
           <div>
-            <h4 className="font-bold text-stone-800 text-sm">{prod.shop_name}</h4>
+            <h4 className="font-bold text-stone-800 text-sm">
+              {prod.shop_name}
+            </h4>
             <div className="mt-1">
               <StatusBadge active={prod.active} />
             </div>
@@ -252,11 +274,15 @@ export default function AdminProductionsPage() {
       <div className="grid grid-cols-2 gap-2 text-[11px] bg-stone-50 p-2.5 rounded-xl border border-stone-100">
         <div>
           <span className="text-stone-400">مالک:</span>{" "}
-          <span className="text-stone-700 font-bold">{prod.owner_name || "ثبت نشده"}</span>
+          <span className="text-stone-700 font-bold">
+            {prod.owner_name || "ثبت نشده"}
+          </span>
         </div>
         <div className="text-left">
           <span className="text-stone-400">تماس:</span>{" "}
-          <span className="font-mono text-stone-700">{prod.production_phone || "ثبت نشده"}</span>
+          <span className="font-mono text-stone-700">
+            {prod.production_phone || "ثبت نشده"}
+          </span>
         </div>
       </div>
 
@@ -308,20 +334,19 @@ export default function AdminProductionsPage() {
 
   return (
     <div className="h-[calc(100vh-110px)] flex flex-col space-y-5 antialiased min-h-0 animate-in fade-in duration-300">
-      {/* هدر صفحه */}
       <div className="border-b border-stone-200/60 pb-4 shrink-0">
         <div className="flex items-center gap-2 text-stone-900">
-          <HiBuildingStorefront className="size-6 text-blue-600" />
+          <HiBuildingStorefront className="size-6 text-emerald-600" />
           <h2 className="text-lg sm:text-xl font-black tracking-tight">
             مدیریت کارگاه‌های تولیدی
           </h2>
         </div>
         <p className="text-xs font-medium text-stone-500 mt-1.5">
-          سیستم یکپارچه نظارت، تایید، حذف یا لغو صلاحیت کارگاه‌ها و ورود مستقیم به پنل محصولات.
+          سیستم یکپارچه نظارت، تایید، حذف یا لغو صلاحیت کارگاه‌ها و ورود مستقیم
+          به پنل محصولات.
         </p>
       </div>
 
-      {/* نوار فیلتر و جستجو */}
       <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200/60 shrink-0 flex flex-col sm:flex-row items-center gap-3">
         <div className="relative w-full sm:flex-1">
           <HiMagnifyingGlass className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4.5 text-stone-400" />
@@ -349,7 +374,6 @@ export default function AdminProductionsPage() {
         </div>
       </div>
 
-      {/* جدول و لیست */}
       <div className="flex-1 flex flex-col min-h-0">
         <DataList
           data={productions}
@@ -375,7 +399,6 @@ export default function AdminProductionsPage() {
         />
       </div>
 
-      {/* مودال جزئیات واحد تولیدی */}
       {selectedProd && (
         <DetailModal
           icon={<HiBuildingStorefront className="size-5 text-blue-600" />}
@@ -425,21 +448,48 @@ export default function AdminProductionsPage() {
           }
         >
           <div className="space-y-3 bg-stone-50 p-4 rounded-xl border border-stone-200/50">
-            <InfoRow icon={<HiBuildingStorefront className="size-3.5" />} label="نام کارگاه" value={selectedProd.shop_name} />
-            <InfoRow icon={<HiUser className="size-3.5" />} label="نام مالک" value={selectedProd.owner_name || "ثبت نشده"} />
-            <InfoRow icon={<HiPhone className="size-3.5" />} label="شماره تماس" value={selectedProd.production_phone || "ثبت نشده"} ltr />
-            <InfoRow icon={<HiFolder className="size-3.5" />} label="رسته‌ها" value={selectedProd.categories?.join("، ") || "بدون رسته"} />
+            <InfoRow
+              icon={<HiBuildingStorefront className="size-3.5" />}
+              label="نام کارگاه"
+              value={selectedProd.shop_name}
+            />
+            <InfoRow
+              icon={<HiUser className="size-3.5" />}
+              label="نام مالک"
+              value={selectedProd.owner_name || "ثبت نشده"}
+            />
+            <InfoRow
+              icon={<HiPhone className="size-3.5" />}
+              label="شماره تماس"
+              value={selectedProd.production_phone || "ثبت نشده"}
+              ltr
+            />
+            <InfoRow
+              icon={<HiFolder className="size-3.5" />}
+              label="رسته‌ها"
+              value={selectedProd.categories
+                ?.map((cat: any) => cat?.name?.trim())
+                .filter(Boolean)
+                .join("، ") || "بدون رسته"}
+            />
           </div>
 
-          <InfoBlock icon={<HiMapPin className="size-3.5" />} label="نشانی و آدرس کارگاه" value={selectedProd.production_address || "آدرسی درج نشده است."} />
+          <InfoBlock
+            icon={<HiMapPin className="size-3.5" />}
+            label="نشانی و آدرس کارگاه"
+            value={selectedProd.production_address || "آدرسی درج نشده است."}
+          />
 
-          {selectedProd.description && (
-            <InfoBlock icon={null} label="توضیحات تکمیلی فعالیت" value={selectedProd.description} />
+          {selectedProd.shop_description && (
+            <InfoBlock
+              icon={null}
+              label="توضیحات تکمیلی فعالیت"
+              value={selectedProd.shop_description}
+            />
           )}
         </DetailModal>
       )}
 
-      {/* مودال تایید حذف کارگاه */}
       {prodToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div
@@ -450,7 +500,9 @@ export default function AdminProductionsPage() {
             <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100 bg-white shrink-0">
               <div className="flex items-center gap-2 text-rose-600">
                 <HiExclamationTriangle className="size-5" />
-                <h3 className="font-black text-sm text-stone-800">حذف کارگاه تولیدی</h3>
+                <h3 className="font-black text-sm text-stone-800">
+                  حذف کارگاه تولیدی
+                </h3>
               </div>
               <button
                 disabled={isDeleteLoading === prodToDelete.id}
@@ -463,8 +515,16 @@ export default function AdminProductionsPage() {
 
             <div className="p-5 space-y-4 text-right">
               <p className="text-xs text-stone-600 leading-relaxed">
-                آیا از حذف کامل کارگاه <span className="font-black text-stone-900">«{prodToDelete.shop_name}»</span> متعلق به{" "}
-                <span className="font-bold text-stone-800">{prodToDelete.owner_name || "ثبت نشده"}</span> و ابطال کامل دسترسی‌ها و محصولات آن اطمینان دارید؟ این عمل غیرقابل بازگشت است.
+                آیا از حذف کامل کارگاه{" "}
+                <span className="font-black text-stone-900">
+                  «{prodToDelete.shop_name}»
+                </span>{" "}
+                متعلق به{" "}
+                <span className="font-bold text-stone-800">
+                  {prodToDelete.owner_name || "ثبت نشده"}
+                </span>{" "}
+                و ابطال کامل دسترسی‌ها و محصولات آن اطمینان دارید؟ این عمل
+                غیرقابل بازگشت است.
               </p>
 
               <div className="flex items-center gap-2 pt-2 border-t border-stone-100">
@@ -474,7 +534,9 @@ export default function AdminProductionsPage() {
                   onClick={handleConfirmDelete}
                   className="flex-1 inline-flex items-center justify-center rounded-xl bg-rose-600 hover:bg-rose-700 px-4 py-2 text-xs font-bold text-white transition-all disabled:opacity-40 active:scale-95 cursor-pointer shadow-sm shadow-rose-600/10"
                 >
-                  {isDeleteLoading === prodToDelete.id ? "در حال حذف..." : "بله، حذف شود"}
+                  {isDeleteLoading === prodToDelete.id
+                    ? "در حال حذف..."
+                    : "بله، حذف شود"}
                 </button>
                 <button
                   type="button"

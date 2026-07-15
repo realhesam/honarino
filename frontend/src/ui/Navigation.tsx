@@ -63,7 +63,6 @@ function Navigation() {
           <HiBars3 />
         </button>
 
-        {/* Mobile Menu */}
         {createPortal(
           <>
             <nav
@@ -130,7 +129,6 @@ function Navigation() {
         )}
       </div>
 
-      {/* Pc Navigation */}
       <nav className="hidden sm:block">
         <ul className="flex gap-5 items-center">
           {links.map((link) => (

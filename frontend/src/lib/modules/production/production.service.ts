@@ -56,6 +56,15 @@ export const ProductionService = {
         }
     },
 
+    async publicGetById(id: string) {
+        try {
+          const response = await ProductionAPI.publicGetById(id);
+          return response.data;
+        } catch (err) {
+          handleServiceError(err);
+        }
+    },
+
     async update(id: string, data: UpdateProductionRequest) {
         try {
             const parsed = UpdateProductionDto.parse(data);

@@ -23,7 +23,7 @@ httpClient.interceptors.response.use(
     if (err.response?.status === 401) {
       localStorage.clear();
       if (typeof window !== "undefined") {
-        window.location.href = "/auth/signin";
+        //window.location.href = "/auth/signin";
       }
     }
     return Promise.reject(err);
