@@ -1,7 +1,13 @@
-.PHONY: help dev hybrid-dev up build build-backend build-frontend logs down restart
+.PHONY: help dev hybrid-dev prod pull restart down
 
 help:
-	@echo "Available targets: dev hybrid-dev up build build-backend build-frontend logs down restart"
+	@echo "Available targets:"
+	@echo "  dev"
+	@echo "  hybrid-dev"
+	@echo "  prod"
+	@echo "  pull"
+	@echo "  restart"
+	@echo "  down"
 
 dev:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
@@ -9,25 +15,16 @@ dev:
 hybrid-dev:
 	docker compose -f docker-compose.yml -f docker-compose.hybrid.yml up --build
 
-up:
-	docker compose up --build -d
+pull:
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
 
-build:
-	docker compose build --no-cache
-
-build-backend:
-	docker compose build backend
-
-build-frontend:
-	docker compose build frontend
-
-logs:
-	docker compose logs -f
-
-down:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml down
-	docker compose -f docker-compose.yml -f docker-compose.hybrid.yml down
-	docker compose down
+prod:
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --pull always --force-recreate --remove-orphans
 
 restart:
-	docker compose restart
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml restart
+
+down:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml down || true
+	docker compose -f docker-compose.yml -f docker-compose.hybrid.yml down || true
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml down || true
