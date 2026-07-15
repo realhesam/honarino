@@ -8,8 +8,6 @@ RUN npm ci
 FROM node:lts-alpine AS builder
 WORKDIR /app
 
-RUN ls
-
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
