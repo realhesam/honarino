@@ -1,7 +1,10 @@
 import { cloneElement } from "react";
 
 interface InputRowData {
-  children: React.ReactNode;
+  children: React.ReactElement<{
+    style?: React.CSSProperties;
+    dir?: "rtl" | "ltr";
+  }>;
   label?: string;
   icon?: React.ReactElement;
   htmlFor?: string;

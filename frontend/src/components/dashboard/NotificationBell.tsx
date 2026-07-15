@@ -23,7 +23,7 @@ export default function NotificationBell() {
   const preview = notifications.slice(0, PREVIEW_COUNT);
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative" ref={ref as React.RefObject<HTMLDivElement>}>
       <button
         onClick={() => setOpen((v) => !v)}
         className="relative flex items-center justify-center size-10 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors"

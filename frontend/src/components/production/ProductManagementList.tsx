@@ -4,17 +4,17 @@ import { useState } from "react";
 import Image from "next/image";
 import type { ProductType } from "@/types/types";
 
-// Mock data - in real app, this would come from API/database
 const mockProducts: ProductType[] = Array.from({ length: 5 }, (_, i) => ({
   id: 530 + i,
   cover: "/images/product.jpg",
   alt: "تصویر مبل راحتی رویال",
   name: `مبل ال راحتی رویال ${i + 1}`,
   builder: "تولیدی مبلمان آقای علیسواری",
+  builderSlug: `alisavari-${i + 1}`, // اضافه شد
   slug: `mbl-al-kapr-${i + 1}`,
-  caption:
-    "مبل ال کاپر یکی از انواع مبل‌های ال ساده و مینیمال است که به دلیل سادگی در طراحی و سبک متفاوتی که دارد مورد توجه قرار گرفته است.",
+  caption: "...",
   category: "مبلمان",
+  city: "تهران", // اضافه شد
   rate: 4.5,
   price: 21000000,
   offerPrice: 20000000,
@@ -148,7 +148,6 @@ function ProductEditForm({
       name: formData.name,
       caption: formData.caption,
       price: Number(formData.price),
-      offerPrice: formData.offerPrice ? Number(formData.offerPrice) : undefined,
       offer: formData.offer ? Number(formData.offer) : 0,
     });
   };

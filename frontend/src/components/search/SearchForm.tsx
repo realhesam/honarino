@@ -9,7 +9,7 @@ import {
 } from "react-icons/hi2";
 import { PiFactoryFill } from "react-icons/pi";
 
-function submitForm(e: FormDataEvent) {
+function submitForm(e: React.FormEvent<HTMLFormElement>) {
   e.preventDefault();
   // ...
 }

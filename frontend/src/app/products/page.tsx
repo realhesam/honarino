@@ -8,11 +8,10 @@ import type { CategoryResponse } from "@/lib/modules/category/category.types";
 import type { ProductType } from "@/types/types";
 import InputRow from "@/ui/InputRow";
 import LinkButton from "@/ui/LinkButton";
-import Modal from "@/ui/Modal";
 import Pagination from "@/ui/Pagination";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FiSliders, FiRefreshCw, FiInbox, FiSearch } from "react-icons/fi";
+import { FiSliders, FiRefreshCw, FiInbox, FiSearch, FiX } from "react-icons/fi";
 import {
   HiAdjustmentsHorizontal,
   HiCube,
@@ -33,9 +32,10 @@ const sortOptions = [
 type ProductsHeaderProps = {
   categories: CategoryResponse[];
   totalProducts: number;
+  onFilterApplied?: () => void;
 };
 
-function ProductsHeader({ categories, totalProducts }: ProductsHeaderProps) {
+function ProductsHeader({ categories, totalProducts, onFilterApplied }: ProductsHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -65,8 +65,10 @@ function ProductsHeader({ categories, totalProducts }: ProductsHeaderProps) {
 
       params.delete("page");
       router.push(`${pathname}?${params.toString()}`);
+      
+      if (onFilterApplied) onFilterApplied();
     },
-    [pathname, router, searchParams],
+    [pathname, router, searchParams, onFilterApplied],
   );
 
   const activeFilterCount = [
@@ -80,6 +82,7 @@ function ProductsHeader({ categories, totalProducts }: ProductsHeaderProps) {
     setSearchTerm("");
     setMaxPriceInput("");
     router.push(pathname);
+    if (onFilterApplied) onFilterApplied();
   };
 
   const applySearch = () => {
@@ -91,8 +94,8 @@ function ProductsHeader({ categories, totalProducts }: ProductsHeaderProps) {
   };
 
   return (
-    <div className="mb-6 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:shadow-md">
-      {/* فیلد جستجوی زیبا */}
+    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all lg:mb-6 hover:shadow-md">
+      {/* فیلد جستجو */}
       <div className="relative mb-5">
         <InputRow
           icon={<FiSearch className="text-slate-400 text-lg" />}
@@ -113,7 +116,7 @@ function ProductsHeader({ categories, totalProducts }: ProductsHeaderProps) {
         </InputRow>
       </div>
 
-      {/* فیلترهای کنترلی سفارشی‌شده */}
+      {/* فیلترهای کنترلی */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* دراپ‌دان دسته‌بندی */}
         <div className="relative group">
@@ -140,7 +143,6 @@ function ProductsHeader({ categories, totalProducts }: ProductsHeaderProps) {
               ))}
             </select>
           </InputRow>
-          {/* فلش اختصاصی و متحرک راست‌چین برای دراپ‌دان */}
           <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 flex items-center pr-2 text-slate-400 transition-transform group-hover:translate-y-[-40%]">
             <svg
               className="fill-current h-4 w-4"
@@ -194,7 +196,6 @@ function ProductsHeader({ categories, totalProducts }: ProductsHeaderProps) {
               ))}
             </select>
           </InputRow>
-          {/* فلش اختصاصی و متحرک چپ‌چین برای دراپ‌دان دوم */}
           <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 flex items-center pr-2 text-slate-400 transition-transform group-hover:translate-y-[-40%]">
             <svg
               className="fill-current h-4 w-4"
@@ -292,6 +293,19 @@ export default function ProductsPage() {
   const [totalProducts, setTotalProducts] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (isDrawerOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isDrawerOpen]);
 
   useEffect(() => {
     let isMounted = true;
@@ -352,16 +366,9 @@ export default function ProductsPage() {
   }, [page, searchTerm, selectedCategory]);
 
   const visibleProducts = useMemo(() => {
-
     const filteredAndSorted = sortAndFilterProducts(products, sortBy, maxPrice);
-
-
     return filteredAndSorted.map(mapProductToWithMeta);
   }, [maxPrice, products, sortBy]);
-
-  const header = (
-    <ProductsHeader categories={categories} totalProducts={totalProducts} />
-  );
 
   return (
     <div
@@ -370,7 +377,9 @@ export default function ProductsPage() {
       style={{ marginTop: "120px" }}
     >
       {/* هدر در دسکتاپ */}
-      <div className="hidden lg:block">{header}</div>
+      <div className="hidden lg:block">
+        <ProductsHeader categories={categories} totalProducts={totalProducts} />
+      </div>
 
       {/* هدر در موبایل */}
       <div className="mb-5 flex items-center justify-between lg:hidden">
@@ -378,19 +387,61 @@ export default function ProductsPage() {
           <HiCube className="h-6 w-6 text-emerald-600" />
           <span>لیست محصولات</span>
         </h3>
-        <Modal>
-          <Modal.Open name="products-header">
-            <button className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50">
-              <FiSliders className="h-4 w-4" />
-              فیلترها و جستجو
+        
+        {/* دکمه باز کردن دراور شیک */}
+        <button 
+          onClick={() => setIsDrawerOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-95"
+        >
+          <FiSliders className="h-4 w-4 text-emerald-600" />
+          فیلترها و جستجو
+        </button>
+      </div>
+
+      {/* Bottom Sheet برای موبایل با افکت‌ها و انیمیشن روان */}
+      <div className="lg:hidden">
+        {/* لایه تیره پشت منو (Overlay) */}
+        <div
+          className={`fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-xs transition-opacity duration-300 ${
+            isDrawerOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
+          onClick={() => setIsDrawerOpen(false)}
+        />
+
+        {/* بدنه Bottom Sheet */}
+        <div
+          className={`fixed bottom-0 left-0 right-0 z-[101] max-h-[92vh] rounded-t-[2.5rem] bg-slate-50 shadow-2xl transition-all duration-300 ease-out flex flex-col ${
+            isDrawerOpen ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
+          }`}
+        >
+          {/* دسته بالا (Drag / Pull Handle) برای ظاهر طبیعی‌تر موبایل */}
+          <div className="flex justify-center py-3.5 cursor-pointer" onClick={() => setIsDrawerOpen(false)}>
+            <div className="h-1.5 w-14 rounded-full bg-slate-300" />
+          </div>
+
+          {/* هدر دراور */}
+          <div className="flex items-center justify-between px-6 pb-4 border-b border-slate-100 bg-slate-50">
+            <h4 className="flex items-center gap-2 text-base font-bold text-slate-800">
+              <HiAdjustmentsHorizontal className="h-5 w-5 text-emerald-600" />
+              <span>فیلتر و جستجوی محصولات</span>
+            </h4>
+            <button
+              onClick={() => setIsDrawerOpen(false)}
+              className="rounded-full bg-slate-100 p-2 text-slate-500 hover:bg-slate-200 transition-colors"
+            >
+              <FiX className="h-4 w-4" />
             </button>
-          </Modal.Open>
-          <Modal.Window name="products-header">
-            <div className="p-4" dir="rtl">
-              {header}
-            </div>
-          </Modal.Window>
-        </Modal>
+          </div>
+
+          {/* محتوای دراور با اسکرول داخلی ایمن */}
+          <div className="overflow-y-auto px-6 py-5 pb-10 bg-white">
+            <ProductsHeader 
+              categories={categories} 
+              totalProducts={totalProducts} 
+              onFilterApplied={() => setIsDrawerOpen(false)} 
+            />
+          </div>
+        </div>
       </div>
 
       {/* وضعیت‌های مختلف بدنه اصلی صفحه */}

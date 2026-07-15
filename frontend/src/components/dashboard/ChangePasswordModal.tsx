@@ -84,7 +84,7 @@ export default function ChangePasswordModal({
   return (
     <>
       <div
-        ref={ref}
+        ref={ref as React.RefObject<HTMLDivElement>}
         className="absolute inset-0 m-auto h-fit z-50 w-full sm:max-w-[380px] bg-white rounded-t-3xl sm:rounded-2xl border border-stone-200/50 shadow-2xl p-6 pb-8 sm:pb-6 space-y-5 transform transition-all duration-300 animate-slide-up sm:animate-scale-in"
       >
         <div className="flex items-center justify-between w-full">

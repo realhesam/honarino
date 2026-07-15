@@ -12,7 +12,21 @@ import LinkButton from "./LinkButton";
 import Overlay from "./Overlay";
 import { HiOutlineXMark } from "react-icons/hi2";
 
-const ModalContext = createContext({});
+interface ModalContextType {
+  openName: string | boolean;
+  open: React.Dispatch<React.SetStateAction<string | boolean>>;
+  close: () => void;
+}
+
+const ModalContext = createContext<ModalContextType | undefined>(undefined);
+
+function useModalContext() {
+  const context = useContext(ModalContext);
+  if (!context) {
+    throw new Error("Modal compound components must be used within <Modal>");
+  }
+  return context;
+}
 
 function Modal({ children }: Readonly<{ children: React.ReactNode }>) {
   const [openName, setOpenName] = useState<string | boolean>("");
@@ -20,26 +34,30 @@ function Modal({ children }: Readonly<{ children: React.ReactNode }>) {
   const close = () => setOpenName("");
 
   return (
-    <ModalContext value={{ openName, open, close }}>{children}</ModalContext>
+    <ModalContext.Provider value={{ openName, open, close }}>
+      {children}
+    </ModalContext.Provider>
   );
 }
+
+type ClickableElement = React.ReactElement<{ onClick?: () => void }>;
 
 function Open({
   children,
   name,
 }: {
-  children: React.ReactElement;
+  children: ClickableElement;
   name: string;
 }) {
-  const { open } = useContext(ModalContext);
+  const { open } = useModalContext();
 
   return cloneElement(children, {
     onClick: () => open(name),
   });
 }
 
-function Close({ children }) {
-  const { close } = useContext(ModalContext);
+function Close({ children }: { children: ClickableElement }) {
+  const { close } = useModalContext();
   return cloneElement(children, { onClick: close });
 }
 
@@ -54,10 +72,10 @@ function Window({
   label: string;
   icon: React.ReactElement;
 }) {
-  const { openName, close } = useContext(ModalContext);
-  const { ref } = useOutsideClick(close);
+  const { openName, close } = useModalContext();
+  const { ref } = useOutsideClick<HTMLDivElement>(close);
 
-  if (openName !== name) return;
+  if (openName !== name) return null;
 
   return createPortal(
     <>

@@ -72,9 +72,7 @@ export default function EditProfileForm() {
     setIsSubmitting(true);
 
     try {
-      await updateProfile(formData, selectedFile, (percent) => {
-        setUploadProgress(percent);
-      });
+      await updateProfile(formData, selectedFile);
 
       notification.success("تغییرات حساب کاربری با موفقیت ذخیره شد");
       setSelectedFile(null);

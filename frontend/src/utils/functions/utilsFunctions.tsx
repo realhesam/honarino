@@ -15,7 +15,10 @@ export function toJalali(dateInput: Date | string) {
   });
 
   const parts = fmt.formatToParts(d);
-  const get = (type) => parts.find((p) => p.type === type).value;
+  const get = (type: Intl.DateTimeFormatPartTypes): string => {
+    const part = parts.find((p) => p.type === type);
+    return part?.value ?? "";
+  };
 
   const year = get("year");
   const month = get("month");

@@ -1,9 +1,13 @@
+interface Category {
+  id: string;
+  name?: string;
+}
 export interface Production {
     id: string;
     shop_id: string;
     shop_name: string;
     shop_description: string;
-    categories: string[];
+    categories: Category[];
     production_address: string;
     production_phone: string;
     production_email: string;

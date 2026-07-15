@@ -40,10 +40,10 @@ export function UserProvider({
   user: initialUser,
   children,
 }: {
-  user: UserData;
+  user?: UserData;
   children: React.ReactNode;
 }) {
-  const [user, setUser] = useState<UserData | null>(initialUser);
+  const [user, setUser] = useState<UserData | null>(initialUser ?? null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const fetchUserData = useCallback(async () => {

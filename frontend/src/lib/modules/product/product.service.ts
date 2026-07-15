@@ -18,7 +18,7 @@ export const ProductService = {
   async list(
     limit: number,
     offset: number,
-    filters?: { q?: string; categoryId?: string },
+    filters?: { q?: string; categoryId?: string; productionId?: string },
   ) {
     try {
       const response = await ProductAPI.list(limit, offset, filters);
