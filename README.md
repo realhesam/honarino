@@ -19,6 +19,19 @@ Project designed for malayer, in this project you can create your own production
     <img src="./github/feature03.jpg" width="30%" />
 </p>
 
+## 🛠️ Tech Stack
+
+<div align="center">
+    <img src="https://img.shields.io/badge/REACT-009865?style=for-the-badge&logo=react&logoColor=white"/>
+    <img src="https://img.shields.io/badge/NEXT-009865?style=for-the-badge&logo=next.js&logoColor=white"/>
+    <img src="https://img.shields.io/badge/TAILWIND-009865?style=for-the-badge&logo=tailwindcss&logoColor=white"/>
+    <img src="https://img.shields.io/badge/GO-009865?style=for-the-badge&logo=go&logoColor=white"/>
+    <img src="https://img.shields.io/badge/DOCKER-009865?style=for-the-badge&logo=docker&logoColor=white"/>
+    <img src="https://img.shields.io/badge/POSTGRES-009865?style=for-the-badge&logo=postgresql&logoColor=white"/>
+    <img src="https://img.shields.io/badge/REDIS-009865?style=for-the-badge&logo=redis&logoColor=white"/>
+
+</div>
+
 ## 🖥️ Preview
 
 <p align="center">
@@ -29,45 +42,6 @@ Project designed for malayer, in this project you can create your own production
     <img src="./github/honarino03.png" width="45%" />
     <img src="./github/honarino04.png" width="45%" />
 </p>
-
-## 🛠️ Tech Stack
-
-![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) ![Next JS](https://img.shields.io/badge/Next-black.svg?style=for-the-badge&logo=next.js&logoColor=white) ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) ![React Hook Form](https://img.shields.io/badge/React%20Hook%20Form-%23EC5990.svg?style=for-the-badge&logo=reacthookform&logoColor=white) ![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white) ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
-
-## 📁 Directory
-
-```
-.
-├── backend
-│   ├── cmd
-│   ├── config
-│   ├── db
-│   ├── Dockerfile
-│   ├── Dockerfile.dev
-│   ├── go.mod
-│   ├── go.sum
-│   ├── internal
-│   ├── Makefile
-│   └── sqlc.yaml
-├── frontend
-│   ├── Dockerfile
-│   ├── Dockerfile.develop
-│   ├── eslint.config.mjs
-│   ├── next.config.ts
-│   ├── next-env.d.ts
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── postcss.config.mjs
-│   ├── public
-│   ├── src
-│   └── tsconfig.json
-├── docker-compose.dev.yml
-├── docker-compose.hybrid.yml
-├── docker-compose.yml
-├── Makefile
-└── README.md
-```
-
----
+<br/>
 
 <p align="center">-+- make your own business -+-</p>
